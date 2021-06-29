@@ -1,0 +1,32 @@
+{
+  "name": "ixr",
+  "version": "1.0.0",
+  "description": "",
+  "main": ".eslintrc.js",
+  "dependencies": {
+    "pubsub-js": "^1.9.3",
+    "three": "^0.129.0",
+    "troika-three-text": "^0.42.0"
+  },
+  "scripts": {
+    "dev": "webpack serve --config webpack.dev.js --progress",
+    "build": "webpack --config webpack.prod.js --progress"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/franck34/ixr.git"
+  },
+  "author": "Franck TABARY",
+  "license": "UNLICENSED",
+  "bugs": {
+    "url": "https://github.com/franck34/ixr/issues"
+  },
+  "homepage": "https://github.com/franck34/ixr#readme",
+  "devDependencies": {
+    "clean-webpack-plugin": "^4.0.0-alpha.0",
+    "copy-webpack-plugin": "^9.0.0",
+    "webpack": "^5.37.1",
+    "webpack-cli": "^4.7.0",
+    "webpack-dev-server": "^3.11.2"
+  }
+}
