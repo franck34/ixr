@@ -1,3 +1,6 @@
-import { config } from './config/index.js';
+import { config as worldConfig } from './config/index.js';
+import { World } from './libs/World.js';
 
-console.log(config);
+const myWorld = new World(worldConfig);
+
+

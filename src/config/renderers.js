@@ -2,24 +2,32 @@ import * as THREE from 'three';
 
 const renderers = {
 
-    'defaults':{
+    default:'WebGlRenderer',
 
-        webGLRendererOptions :{ antialias:true },
-        pixelRatio:window.devicePixelRatio,
-        size:[window.innerWidth, window.innerHeight],
+    items:{
+        'WebGlRenderer':{
+            type:'webGlRenderer',
+            webGLRendererOptions :{ antialias:true },
 
-        // Set up a non-black clear color so that we can see if something renders wrong.
-        clearColor:0x010203,
-        autoClear:false,
+            // Set up a non-black clear color so that we can see if something renders wrong.
+            clearColor:0x010203,
+            autoClear:true,
 
-        shadowMapEnabled:true,
-        shadowMapSoft:true,
-        shadowMapType:THREE.PCFSoftShadowMap,
+            shadowMap:{
+                enabled:true,
+                type:THREE.PCFSoftShadowMap, // BasicShadowMap, PCFShadowMap (default), PCFSoftShadowMap, VSMShadowMap
+            },
 
-        outputEncoding:THREE.sRGBEncoding,
-        toneMapping:THREE.ReinhardToneMapping, // THREE.ACESFilmicToneMapping, ...
-        //@TODO: implement toneMappingExposureXR
-        toneMappingExposure:Math.pow(2, 4.0),
+            outputEncoding:THREE.sRGBEncoding,
+            toneMapping: THREE.ACESFilmicToneMapping, // THREE.ACESFilmicToneMapping, ...
+            //toneMapping: THREE.NoToneMapping,
+            //toneMapping: THREE.LinearToneMapping,
+            //toneMapping: THREE.ReinhardToneMapping,
+            //toneMapping: THREE.CineonToneMapping,
+            //@TODO: implement toneMappingExposureXR
+            //toneMappingExposure:Math.pow(2, 4.0),
+            physicallyCorrectLights:false
+        }
                 
     }
 
