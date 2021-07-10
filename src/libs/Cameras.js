@@ -70,6 +70,103 @@ function DollyCamera( world, name, config ) {
     world.add(dolly);
     console.log('DollyCamera: adding', camera);
 
+    
+    function onKeyDown(ev) {
+
+        
+        switch ( ev.code ) {
+
+            case 'ArrowUp':
+            case 'KeyW':
+                dolly.moveForward = true;
+                break;
+    
+            case 'ArrowLeft':
+            case 'KeyA':
+                dolly.moveLeft = true;
+                break;
+    
+            case 'ArrowDown':
+            case 'KeyS':
+                dolly.moveBackward = true;
+                break;
+    
+            case 'ArrowRight':
+            case 'KeyD':
+                dolly.moveRight = true;
+                break;
+
+            case 'ShiftLeft':
+            case 'RightLeft':
+                dolly.run = true;
+                break;
+    
+            case 'Space':
+                if ( dolly.canJump === true ) dolly.velocity.y += 150;
+                dolly.canJump = false;
+                break;
+    
+        }
+    
+    }
+
+    function onKeyUp(ev) {
+        
+
+	    switch ( ev.code ) {
+
+		    case 'ArrowUp':
+		    case 'KeyW':
+			    dolly.moveForward = false;
+			    break;
+
+		    case 'ArrowLeft':
+		    case 'KeyA':
+			    dolly.moveLeft = false;
+			    break;
+
+		    case 'ArrowDown':
+		    case 'KeyS':
+    			dolly.moveBackward = false;
+	    		break;
+
+		    case 'ArrowRight':
+		    case 'KeyD':
+			    dolly.moveRight = false;
+			    break;
+
+            case 'ShiftLeft':
+            case 'RightLeft':
+                dolly.run = false;
+                break;
+
+	    }
+
+    }
+
+
+    function setupKeyboard() {
+        
+        const keyboardManager = world.get('keyboardManager');
+        if (keyboardManager) {
+
+            keyboardManager.addKeyListener({
+                code:'KeyW',
+                event:'keydown',
+                handler:onKeyDown
+            });
+
+            keyboardManager.addKeyListener({
+                code:'KeyW',
+                event:'keyup',
+                handler:onKeyUp
+            });
+        }
+
+    }
+
+    setupKeyboard();
+
     return {
         threeObject:camera,
         dolly,

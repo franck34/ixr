@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js';
+import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js';
 
 function Loader(world, config) {
 
@@ -136,7 +137,7 @@ function Loader(world, config) {
     const textureLoader = new THREE.TextureLoader(loadingManager);
 
     // Draco loader
-    const dracoLoader = new DRACOLoader()
+    const dracoLoader = new DRACOLoader(loadingManager)
     dracoLoader.setDecoderPath('draco/')
     
     // GLTFLoader
@@ -146,15 +147,22 @@ function Loader(world, config) {
         gltfLoader.setPath(config.basepath);
     }
 
-    const rgbeLoader = new RGBELoader().setDataType( THREE.UnsignedByteType );
+    const rgbeLoader = new RGBELoader(loadingManager).setDataType( THREE.UnsignedByteType );
 
-    return {
+    const objLoader = new OBJLoader(loadingManager);
+
+    const loader = {
         loadingManager,
         textureLoader,
         dracoLoader,
         gltfLoader,
-        rgbeLoader
+        rgbeLoader,
+        objLoader
     }
+
+    world.set('loader', loader);
+
+    return loader;
 
 }
 

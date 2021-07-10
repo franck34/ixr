@@ -6,6 +6,7 @@ import { cameras } from './cameras.js';
 import { lights } from './lights.js';
 import { keyboard } from './keyboard.js';
 import { controls } from './controls.js';
+import { dolly } from './dolly.js';
 
 const config = {
 
@@ -16,7 +17,8 @@ const config = {
     lights,
     cameras,
     keyboard,
-    controls
+    controls,
+    dolly
     
 }
 

@@ -10,8 +10,8 @@ const lights = {
         'ambient':{
             enable: false,
             type: 'ambient',
-            color: new THREE.Color(0xffffff),
-            intensity: 0.1
+            color: new THREE.Color(0x000000),
+            intensity: 1
         },
 
         'directional':{
@@ -28,7 +28,7 @@ const lights = {
         },
 
         'point':{
-            enable:false,
+            enable:true,
             type: 'point',
             showHelper:false,
             color:new THREE.Color( 0xffffff ),

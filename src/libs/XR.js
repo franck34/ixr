@@ -11,6 +11,9 @@ class MotionControllerPointer {
     constructor( hand ) {
         this.hand = hand;
         this.object = new THREE.Object3D();
+
+        this.light = new THREE.PointLight();
+        this.object.add(this.light);
     }
 
 }
@@ -19,13 +22,20 @@ class XR {
 
     constructor( world, config ) {
 
+        this.dolly = world.get3('dolly');
+        if (!this.dolly) {
+            throw new Error('XR controller require a camea dolly');
+        }
+
         this.world = world;
 
-        this.dolly = world.get3('dolly');
-        this.renderer = world.get3('renderer.main');
-        this.renderer.xr.enabled = true;
-        this.renderer.xr.setFramebufferScaleFactor(2.0);
-        this.renderer.toneMappingExposure = Math.pow(1.2, 4.0);
+        this.setupRenderer();
+        this.setupXRButton();
+        this.setupRaycaster();
+
+    }
+
+    setupRaycaster() {
 
         //THREE.Mesh.prototype.raycast = acceleratedRaycast;
         setTimeout(() => {
@@ -37,11 +47,28 @@ class XR {
         //this.world.scene.boundsTree = new MeshBVH(this.world.scene);
 
         this.world.raycaster = new THREE.Raycaster();
-        
         this.line = new Ray.getBeam();
         this.marker = this.raymarker();
+        
+    }
 
-        const btn = new VRButton( this.renderer, { vrStatus:this.vrStatus.bind(this) } );
+    setupRenderer() {
+        
+        this.renderer = this.world.get3('renderer.main');
+        this.renderer.xr.enabled = true;
+        this.renderer.xr.setFramebufferScaleFactor(2.0);
+        this.renderer.toneMappingExposure = Math.pow(1.2, 4.0);
+
+    }
+
+    setupXRButton() {
+
+        const btn = new VRButton(
+            this.renderer,
+            {
+                vrStatus:this.vrStatus.bind(this)
+            }
+        );
         document.body.appendChild( btn.createButton() );
 
     }
@@ -114,7 +141,7 @@ class XR {
         }
 
         function onConnected( evt ) {
-            console.log('onConnected');
+            console.log('onConnected' , evt);
             const session = self.renderer.xr.getSession();
             const device = session.inputSources[ctrlIdx];
             handedness = device.handedness;
@@ -124,9 +151,7 @@ class XR {
                 mc.controller = ray;
                 mc.object.add(grip);
                 mc.enabled = true;
-                if (self.dolly) {
-                    self.dolly.add(mc.object);
-                }
+                self.dolly.add(mc.object);
             }
         }
 
@@ -138,9 +163,7 @@ class XR {
                 mc.object.remove(grip);
                 mc.controller = null;
                 mc.inputSource = null;
-                if (self.dolly) {
-                    self.dolly.remove(mc.object);
-                }
+                self.dolly.remove(mc.object);
             }
         }
 
@@ -160,9 +183,8 @@ class XR {
         grip.add(model);
     
         let handedness = null;
-        if (self.dolly) {
-            self.dolly.add(ray);
-        }
+        self.dolly.add(ray);
+
 
     };
 

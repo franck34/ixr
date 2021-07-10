@@ -86,9 +86,13 @@ function Renderer(world, name, config) {
         return false;
     }
 
-    function render() {
+    let sm, cm;
 
-        renderer.render( world.get3('scene.main'), world.get3('camera.main'));
+    function render() {
+        
+        if ( !sm ) sm = world.get3( 'scene.main' );
+        if ( !cm ) cm = world.get3( 'camera.main' );
+        if ( sm && cm ) renderer.render( sm, cm );
 
     }
 

@@ -2,7 +2,7 @@ import * as THREE from 'three';
 
 //@TODO: https://stackoverflow.com/questions/16226693/three-js-show-world-coordinate-axes-in-corner-of-scene
 
-function Scene(sceneName, sceneConfig) {
+function Scene(world, sceneName, sceneConfig) {
 
     if (!sceneConfig || typeof sceneConfig != 'object') {
         throw new Error('Scene: unexpected typeof of sceneConfig');
@@ -41,6 +41,20 @@ function Scene(sceneName, sceneConfig) {
 
         scene[key] = sceneConfig[key];
 
+        setupKeyboard();
+    }
+
+    function setupKeyboard() {
+        
+        const keyboardManager = world.get('keyboardManager');
+        if (keyboardManager) {
+            keyboardManager.addKeyListener({
+                key:'w',
+                event:'keydown',
+                handler:toggleWireframe
+            });
+        }
+
     }
 
     function add() {
@@ -58,6 +72,11 @@ function Scene(sceneName, sceneConfig) {
 			
                 if (child.isMesh) {
 
+                    if (child.font) {
+                        // dont wireframe fonts ! (browser crash)
+                        return;
+                    }
+                    
 				    const wireframeGeometry = new THREE.WireframeGeometry( child.geometry );
 				    const wireframeMaterial = new THREE.LineBasicMaterial( { color: 0xFFFFFF } );
 				    const wireframe = new THREE.LineSegments( wireframeGeometry, wireframeMaterial );
@@ -65,6 +84,7 @@ function Scene(sceneName, sceneConfig) {
 				    child.add(wireframe);
                     child.wireframe = wireframe;
                     //child.visible = false;
+
     			}
 		    });
 
@@ -87,6 +107,8 @@ function Scene(sceneName, sceneConfig) {
 		    wireframe = false;
 
         }
+
+        console.log('done');
     }
 
     // for debugging
@@ -111,7 +133,7 @@ function Scenes(world, config) {
 
     for (const name in config.items) {
 
-        scenes[name] = new Scene( name, config.items[name] );
+        scenes[name] = new Scene( world, name, config.items[name] );
 
     }
 

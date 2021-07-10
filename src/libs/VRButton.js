@@ -40,7 +40,7 @@ class VRButton {
 				await self.renderer.xr.setSession( session );
 				button.textContent = 'EXIT VR';
 
-				//PubSub.publish('XREnter');
+				PubSub.publish('XREnter');
 				currentSession = session;
 
 				if (self.onSessionStart !== undefined) self.onSessionStart();
@@ -51,7 +51,7 @@ class VRButton {
 
 				currentSession.removeEventListener( 'end', onSessionEnded );
 				button.innerHTML = '<i class="fas fa-vr-cardboard"></i>';
-				//PubSub.publish('XRExit');
+				PubSub.publish('XRExit');
 				currentSession = null;
 	            if (self.onSessionEnd !== undefined) self.onSessionEnd();
 

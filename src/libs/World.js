@@ -1,3 +1,4 @@
+import { Loader } from './Loader.js';
 import { Renderers } from './Renderers.js';
 import { Scenes } from './Scenes.js';
 import { Assets } from './Assets.js';
@@ -5,6 +6,7 @@ import { Cameras } from './Cameras.js';
 import { Lights } from './Lights.js';
 import { Keyboard } from './Keyboard.js';
 import { Controls } from './Controls.js';
+import { Dolly } from './Dolly.js';
 import { XR } from './XR.js';
 
 function MyWorld(config) {
@@ -28,9 +30,13 @@ function MyWorld(config) {
 
     function get3(id) {
         if (!world[id]) {
-            throw new Error(`world dont have object with id ${id}`);
+            //log.warn(`world dont have object with id ${id}`);
+            return;
         }
-        return world[id].threeObject;
+        if (world[id].threeObject) {
+            return world[id].threeObject;
+        }
+        return world[id];
     }
 
     function add(parentId, object) {
@@ -64,11 +70,17 @@ function World(config) {
 
     new Scenes( world, config.scenes );
     new Renderers( world, config.renderers );
-    new Assets( world, config.assets );
-    new Lights( world, config.lights );
-    new Cameras( world, config.cameras );
+    //new Cameras( world, config.cameras );
     
     new Keyboard( world, config.keyboard );
+    new Dolly( world, config.dolly );
+    
+
+    new Loader( world, config.assets );
+    new Assets( world, config.assets );
+
+    new Lights( world, config.lights );
+    
     //new Controls( world, config.controls );
 
     new XR(world, config.xr );

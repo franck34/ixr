@@ -141,7 +141,7 @@ function getBasicLine() {
 function getBeam() {
 
     const line = getBasicLine();
-    console.log(line);
+    console.log('getBeam', line);
 
     const glow = new THREE.Mesh(line.geometry.clone(), getGlowMaterial());
     glow.scale.multiplyScalar(30);

@@ -1,94 +1,5 @@
 import * as THREE from 'three';
-import { Loader } from './Loader.js';
 import { Shapes } from './shapes/index.js';
-
-function applyShadow( options, object ) {
-
-    if (!object.isMesh) {
-        return;
-    }
-
-    console.log('apply shadow', object.name, options.castShadow, options.receiveShadow);
-
-    if (options.castShadow) {
-        object.castShadow = true;
-    }
-
-    if (options.receiveShadow) {
-        object.receiveShadow = true;
-    }
-
-    /*
-    if (child.userData && child.userData.receiveRay) {
-        child.geometry.computeBoundsTree = computeBoundsTree;
-        self.objectsReceiveRay.push(child);
-        
-        if (child.geometry.computeBoundsTree()) {
-            console.log('computeBoundsTree');
-            child.geometry.computeBoundsTree();
-        }
-    }
-    */
-}
-
-function applyScale( options, object ) {
-
-    if (!options.scale) return;
-
-    const v = options.scale;
-    if (v.xyz) {
-        v.x = v.xyz;
-        v.y = v.xyz;
-        v.z = v.xyz;
-        delete v.xyz;
-    }
-
-    //child.geometry.scale( v.x, v.y, v.z );
-    //console.log(child.scale);
-    console.log('applyScale', object, v);
-    object.scale.set( v.x, v.y, v.z );
-
-}
-
-function applyPosition( options, object ) {
-
-    if (!options.position) return;
-
-    const v = options.position;
-    if (v.xyz) {
-        v.x = v.xyz;
-        v.y = v.xyz;
-        v.z = v.xyz;
-        delete v.xyz;
-    }
-
-    console.log('applyPosition', object, v);
-
-    object.position.x = v.x || 0.0;
-    object.position.y = v.y || 0.0;
-    object.position.z = v.z || 0.0;
-
-    console.log(object.position);
-}
-
-function applyRotation( options, object ) {
-
-    if (!options.rotation) return;
-
-    const v = options.rotation;
-    if (v.xyz) {
-        v.x = v.xyz;
-        v.y = v.xyz;
-        v.z = v.xyz;
-        delete v.xyz;
-    }
-
-    console.log('applyRotation', object, v);
-
-    object.rotation.x = v.x || 0.0;
-    object.rotation.y = v.y || 0.0;
-    object.rotation.z = v.z || 0.0;
-}
 
 function Assets(world, config) {
 
@@ -97,13 +8,124 @@ function Assets(world, config) {
     }
 
     const assets = {};
-    const loader = new Loader(world, config);
+    const loader = world.get('loader');
     const categories = {};
 
     const gltfLoader = loader.gltfLoader;
     const textureLoader = loader.textureLoader;
     const rgbeLoader = loader.rgbeLoader;
 
+    function applyAnimation( options, object ) {
+
+        console.log('applyAnimation', options);
+        if (!options.animate || options.animate.enable === false) {
+            return;
+        }
+        
+        const r = options.animate.rotation;
+        if (r) {
+    
+            function rotateEarth(delta, time) {
+                if (r.x) object.rotation.x += r.x * delta;
+                if (r.y) object.rotation.y += r.y * delta;
+                if (r.z) object.rotation.z += r.z * delta;
+                return true;
+            }
+    
+            world.get('renderer.main').addRenderJob( rotateEarth );
+            console.log('apply animation', object.name, options.castShadow, options.receiveShadow);
+        }
+    
+    }
+    
+    function applyShadow( options, object ) {
+    
+        if ( !object.isMesh ) {
+            return;
+        }
+    
+        console.log('apply shadow', object.name, options.castShadow, options.receiveShadow);
+    
+        if (options.castShadow) {
+            object.castShadow = true;
+        }
+    
+        if (options.receiveShadow) {
+            object.receiveShadow = true;
+        }
+    
+        /*
+        if (child.userData && child.userData.receiveRay) {
+            child.geometry.computeBoundsTree = computeBoundsTree;
+            self.objectsReceiveRay.push(child);
+            
+            if (child.geometry.computeBoundsTree()) {
+                console.log('computeBoundsTree');
+                child.geometry.computeBoundsTree();
+            }
+        }
+        */
+    }
+    
+    function applyScale( options, object ) {
+    
+        if (!options.scale) return;
+    
+        const v = options.scale;
+        if (v.xyz) {
+            v.x = v.xyz;
+            v.y = v.xyz;
+            v.z = v.xyz;
+            delete v.xyz;
+        }
+    
+        //child.geometry.scale( v.x, v.y, v.z );
+        //console.log(child.scale);
+        console.log('applyScale', object, v);
+        object.scale.set( v.x, v.y, v.z );
+    
+    }
+    
+    function applyPosition( options, object ) {
+    
+        if (!options.position) return;
+    
+        const v = options.position;
+        if (v.xyz) {
+            v.x = v.xyz;
+            v.y = v.xyz;
+            v.z = v.xyz;
+            delete v.xyz;
+        }
+    
+        console.log('applyPosition', object, v);
+    
+        object.position.x = v.x || 0.0;
+        object.position.y = v.y || 0.0;
+        object.position.z = v.z || 0.0;
+    
+        console.log(object.position);
+    }
+    
+    function applyRotation( options, object ) {
+    
+        if (!options.rotation) return;
+    
+        const v = options.rotation;
+        if (v.xyz) {
+            v.x = v.xyz;
+            v.y = v.xyz;
+            v.z = v.xyz;
+            delete v.xyz;
+        }
+    
+        console.log('applyRotation', object, v);
+    
+        object.rotation.x = v.x || 0.0;
+        object.rotation.y = v.y || 0.0;
+        object.rotation.z = v.z || 0.0;
+    }
+    
     function loadModel(world, options) {
 
         if (options.type != 'Model') return;
@@ -214,6 +236,7 @@ function Assets(world, config) {
             applyScale( options, gltf.scene );
             applyPosition( options, gltf.scene );
             applyRotation( options, gltf.scene );
+            applyAnimation( options, gltf.scene );
 
             world.add( gltf.scene );
             
@@ -229,7 +252,7 @@ function Assets(world, config) {
 
     function createShape(world, shapeName, options) {
         if (options.disable) return;
-        console.log('Assets:createShape:', shapeName, options);
+        console.log('Assets:createShape:', shapeName, options, categories);
         const mesh = new categories[shapeName]( world, options );
 
         return mesh;
@@ -243,14 +266,13 @@ function Assets(world, config) {
         let shape;
 
         for (const shapeCategoryName in Shapes) {
-            //console.log('Assets:loadAsset: categoryName', shapeCategoryName);
             const category = Shapes[shapeCategoryName];
             categories[shapeCategoryName] = category;
             
             for (const shapeName in category) {
                 const camelCaseName = `${shapeCategoryName}${shapeName}`;
-
                 if (options.type === camelCaseName) {
+                    console.log('Assets:loadAsset: categoryName', shapeCategoryName, camelCaseName);
                     categories[camelCaseName] = Shapes[shapeCategoryName][shapeName];
                     shape = createShape(world, camelCaseName, options);                   
                     break;

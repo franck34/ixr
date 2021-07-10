@@ -1,10 +1,10 @@
 const cameras = {
 
-    default:'dolly',
+    default:'none',
 
     items:{
         'dolly':{
-            enable:true,
+            enable:false,
             type:'dolly',
             camera:{
                 showHelper:true,
