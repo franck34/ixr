@@ -9,7 +9,7 @@ const scenes = {
 
             //background: colors.sceneBackgroundColor,
             autoUpdate: true,
-            axesHelper: 1,
+            axesHelper: 0,
 
             fog:{
                 enable: false,
