@@ -1,7 +1,9 @@
 import * as THREE from 'three';
-import { PointerLockControls } from 'three/examples/jsm/controls/PointerLockControls';
-import { TextPanel } from '../libs/shapes/basic/TextPanel.js';
-import { merge } from '../libs/utils/merge.js';
+import { TextPanel } from '../shapes/basic/TextPanel.js';
+import { merge } from '../utils/merge.js';
+import { KeyboardControl } from './KeyboardControl.js';
+import { MouseControl } from './MouseControl.js';
+import { Crosshair } from './Crosshair.js';
 
 function Dolly(world, config) {
 
@@ -87,7 +89,9 @@ function Dolly(world, config) {
         //scene.add( helper );
 
         dolly.name = "dolly";
+        dolly.dollyReset = dollyReset;
         dollyReset();
+
 
         dolly.status = 'idle'; // walking, running
         dolly.moving = false;
@@ -113,241 +117,14 @@ function Dolly(world, config) {
         PubSub.subscribe('XREnter', dollyInitialPositionXR);
         PubSub.subscribe('XRExit', dollyInitialPositionScreen);
 
-        initPCKeyboard();
-        initPCMouse();
+        new KeyboardControl(world, config, dolly);
+        new MouseControl(world, config, dolly);
+
+        const crosshair = new Crosshair(world, config);
+        crosshair.adjustToCamera(camera);
+        camera.add( crosshair.mesh );
 
         dollyInitialPositionScreen();
-    }
-
-    function createCrosshair() {
-
-        const material = new THREE.LineBasicMaterial({ color: 0xAAFFAA });
-
-        // crosshair size
-        const x = 0.01;
-        const y = 0.01;
-
-        const geometry = new THREE.BufferGeometry();
-
-        // crosshair
-        const vertices = new Float32Array( [
-               0,    y,    0,
-               0,   -y,    0,
-               0,    0,    0,
-        
-               0,    0,    0,
-               x,    0,    0,
-              -x,    0,  0
-        ] );
-
-        geometry.setAttribute( 'position', new THREE.BufferAttribute( vertices, 3 ) );
-
-        const crosshair = new THREE.Line( geometry, material );
-
-        // place it in the center
-        const crosshairPercentX = 50;
-        const crosshairPercentY = 50;
-        const crosshairPositionX = (crosshairPercentX / 100) * 2 - 1;
-        const crosshairPositionY = (crosshairPercentY / 100) * 2 - 1;
-
-        crosshair.position.x = crosshairPositionX * camera.aspect;
-        crosshair.position.y = crosshairPositionY;
-
-        crosshair.position.z = -0.3;
-
-        camera.add( crosshair );
-
-    }
-
-    function initPCMouse() {
-
-        createCrosshair();
-
-        const controls = new PointerLockControls( dolly, document.body );
-
-        window.addEventListener( 'click', function () {
-            controls.lock();
-        } );
-
-        window.addEventListener( 'mousedown', function () {
-            console.log('mousedown');
-        } );
-
-    }
-
-    function initPCKeyboard() {
-
-        function handleKeydownShift( ev ) {
-
-            if ( ev.code != 'ShiftLeft' ) return false;
-
-            // SHIFT KEY PRESSED (run)
-
-            if ( dolly.status === 'running' ) {
-
-                // already running, no changes
-
-            } else {
-
-                if (dolly.status === 'walking') {
-
-                    console.log('SWITCH WALKING TO RUNNING');
-
-                    dolly.status = 'running';
-
-                    if ( dolly.moveX ) {
-                        dolly.moveXoriginal = dolly.moveX;
-                        dolly.moveX = dolly.moveX * dolly.runRatio;
-                    }
-
-                    if ( dolly.moveY ) {
-                        dolly.moveYoriginal = dolly.moveY;
-                        dolly.moveY = dolly.moveY * dolly.runRatio;
-                    }
-
-                    if ( dolly.moveZ ) {
-                        dolly.moveZoriginal = dolly.moveZ;
-                        dolly.moveZ = dolly.moveZ * dolly.runRatio;
-                    }
-
-                }
-
-            }
-
-            return true;
-
-        }
-
-        function handleKeyupShift( ev ) {
-            
-            if ( ev.code != 'ShiftLeft' ) return false;
-
-            if ( dolly.status ===' running' ) {
-
-                console.log('SWITCH RUNNING TO WALKING', dolly.moveZ);
-                dolly.status = 'walking';
-
-            }
-
-            return true;
-
-        }
-        
-        function showStatus() {
-            
-            if ( dolly.moveX === 0 && dolly.moveY === 0 && dolly.moveZ === 0 ) {
-
-                if (dolly.status != 'idle') {
-
-                    console.log('EMERGENCY SWITCH MOVING TO IDLE');
-                    dolly.moving = false;
-                    dollyReset();
-                    
-                }
-                
-            }
-
-        }
-
-        function addKeyEvent(key, moveDirection, moveAxis, moveAxisValue) {
-
-            keyboardManager.addKeyListener( {
-                id:key,
-                keydown:( delta, time, ev ) => {
-
-                    if (handleKeydownShift(ev)) {
-
-                        if (dolly.status === 'walking') {
-
-                            console.log('SWITCH WALKING TO RUNNING');
-                            dolly.status = 'running';
-
-                        }
-                            
-                        return;
-                    }
-
-                    if (dolly.status === 'idle') {
-
-                        console.log('SWITCH IDLE TO WALKING');
-                        dolly.status = 'walking';
-
-                    }
-
-                    if ( moveDirection ) {
-
-                        dolly[ moveDirection ] = true;
-                        dolly.moving = true;
-                    }
-                    
-                    if ( moveAxis ) {
-
-                        dolly[ moveAxis ] = moveAxisValue;
-                        if (ev.shiftKey) {
-                            dolly[ moveAxis ] = moveAxisValue * dolly.runRatio;
-                        }
-                        dolly.moving = true;
-
-                    }
-                    
-                },
-
-                keyup:( delta, time, ev ) => {
-
-                    if (handleKeyupShift(ev)) {
-
-                        if (dolly.status === 'running') {
-
-                            console.log('SWITCH RUNNING TO WALKING');
-                            dolly.status = 'walking';
-                            
-                            if ( dolly.moveX ) {
-                                dolly.moveX = dolly.moveXoriginal || 0;
-                            }
-
-                            if ( dolly.moveY ) {
-                                dolly.moveY = dolly.moveYoriginal || 0;
-                            }
-
-                            if ( dolly.moveZ ) {
-                                dolly.moveZ = dolly.moveZoriginal || 0;
-                            }
-    
-                        }
-
-                        showStatus();
-                        return;
-                    }
-
-                    if ( moveDirection ) {
-                        dolly[ moveDirection ] = false;
-                    }
-                    
-                    if ( moveAxis ) {
-                        dolly[ moveAxis ] = 0;
-                    }
-
-                    showStatus();
-                    
-                }
-            });  
-
-        }
-
-        const keyboardManager = world.get('keyboardManager');
-
-        if (keyboardManager) {
-
-            addKeyEvent('KeyW', 'moveForward', 'moveZ', -1);
-            addKeyEvent('KeyS', 'moveBackward', 'moveZ', 1);
-            addKeyEvent('KeyA', 'moveLeft', 'moveX', -1);
-            addKeyEvent('KeyD', 'moveRight', 'moveX', 1);
-            addKeyEvent('ShiftLeft');
-
-        } else {
-            console.warn('could not attach dolly to keyboardManager; keyboardManager not found');
-        }
-        
     }
 
     function dollyReset() {
@@ -855,7 +632,7 @@ function Dolly(world, config) {
         world.log.text = text;
         return true;
     }
-
+    
     return self;
 
 }

@@ -6,7 +6,7 @@ import { Cameras } from './Cameras.js';
 import { Lights } from './Lights.js';
 import { Keyboard } from './Keyboard.js';
 import { Controls } from './Controls.js';
-import { Dolly } from './Dolly.js';
+import { Dolly } from './dolly/Dolly.js';
 import { XR } from './XR.js';
 
 function MyWorld(config) {

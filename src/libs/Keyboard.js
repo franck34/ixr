@@ -3,6 +3,8 @@ function Keyboard(world, config) {
     if ( config.disable ) return;
     console.log('Keyboard', config);
 
+    const allowedEvents = [ 'keyup', 'keydown' ];
+
     config.keydown = { };
     config.keyup = { };
 
@@ -116,11 +118,10 @@ function Keyboard(world, config) {
             throw new Error('addKeyListener: missing id (ev.code or ev.key)');
         }
 
-        const allowed = [ 'keyup', 'keydown' ];
         let eventName;
         let handlerType;
 
-        for (eventName of allowed) {
+        for (eventName of allowedEvents) {
             
             if (!options[eventName]) continue;
             console.log('event', eventName);
@@ -139,8 +140,14 @@ function Keyboard(world, config) {
 
     }
 
+    function removeKeyListeners(key) {
+
+
+    }
+
     const keyboardManager = {
-        addKeyListener
+        addKeyListener,
+        removeKeyListeners
     }
 
     world.set('keyboardManager', keyboardManager);
