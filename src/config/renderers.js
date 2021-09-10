@@ -7,7 +7,18 @@ const renderers = {
     items:{
         'WebGlRenderer':{
             type:'webGlRenderer',
-            webGLRendererOptions :{ antialias:true },
+            webGLRendererOptions :{
+                //antialias:true,
+                //logarithmicDepthBuffer: false,
+
+                //https://www.scenegraphstudios.com/z-fighting-or-flickering-models-in-three-ar-js/
+                antialias: true,
+                alpha: true,
+                logarithmicDepthBuffer: true,
+                colorManagement: true,
+                sortObjects: true
+
+             },
 
             // Set up a non-black clear color so that we can see if something renders wrong.
             clearColor:0x010203,
@@ -19,14 +30,14 @@ const renderers = {
             },
 
             outputEncoding:THREE.sRGBEncoding,
-            toneMapping: THREE.ACESFilmicToneMapping, // THREE.ACESFilmicToneMapping, ...
+            //toneMapping: THREE.ACESFilmicToneMapping,
             //toneMapping: THREE.NoToneMapping,
             //toneMapping: THREE.LinearToneMapping,
             //toneMapping: THREE.ReinhardToneMapping,
             //toneMapping: THREE.CineonToneMapping,
             //@TODO: implement toneMappingExposureXR
             //toneMappingExposure:Math.pow(2, 4.0),
-            physicallyCorrectLights:false
+            physicallyCorrectLights:true
         }
                 
     }

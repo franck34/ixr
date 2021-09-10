@@ -12,23 +12,32 @@ const assets = {
         'decor':{
             disable:false,
             type:'Model',
-            file:'/3d/scene4.glb',
-            backed:'/3d/baked2048.jpg',
-            envmap:'/3d/starskyhdrispherical_map_by_kirriaa.jpg',
+            file:'/blender/shootingrange9.glb',
+            /*
+            material:{
+                color:'/3d/palette.png',
+                emissive:'/3d/palette_emissive.png',
+                aoMap:'/blender/bakes/MergedBake_Bake1_cyclesbake_AO.jpg'
+            },
+            */
+            baked:'/blender/SimpleBake_Bakes/MergedBake_Bake1_cyclesbake_COMBINED.jpg',
+            //envmap:'/3d/starskyhdrispherical_map_by_kirriaa.jpg',
             receiveShadow:true,
-            castShadow:false,
+            castShadow:true,
 
             scale:{
-                xyz:1
+                xyz:1.3
             },
 
             position:{
-                //z:-3.2,
+                z:-0.01,
+                y:0.01,
             },
 
             rotation:{
-                y:Math.PI * 0.5
-            }
+                y:Math.PI * 1
+            },
+            depthWrite:true
         },
         'earth':{
             disable:true,
@@ -71,7 +80,7 @@ const assets = {
         },
 
         'button':{
-            disable:false,
+            disable:true,
             type:'BasicButton'
         }
 

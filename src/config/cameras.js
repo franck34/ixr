@@ -7,10 +7,10 @@ const cameras = {
             enable:false,
             type:'dolly',
             camera:{
-                showHelper:true,
+                showHelper:false,
                 fov:60,
-                near:0.1, 
-                far:200,
+                near:10000, 
+                far:3500000,
                 position:{
                     x: 0,
                     y: 1.6, // default devices value, i.e human eyes height,
@@ -49,6 +49,26 @@ const cameras = {
     }
 
 }
+
+/*
+window.addEventListener('resize', () =>
+{
+    // Update displaySize
+    displaySize.width = window.innerWidth
+    displaySize.height = window.innerHeight
+
+    // Update camera
+    const aspectRatio = displaySize.width / displaySize.height
+    const vFOV = 2 * Math.atan( displaySize.height / ( 2 * CAMERA_FAR_PLANE ) ) * RAD_TO_DEG_RATIO
+    camera.fov = vFov;
+    camera.aspect = aspectRatio
+    camera.updateProjectionMatrix()
+
+    // Update renderer
+    renderer.setSize(displaySize.width, displaySize.height)
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+})
+*/
 
 
 export { cameras }

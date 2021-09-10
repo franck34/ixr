@@ -29,4 +29,8 @@
 * box cutter (20$)
 * mesh machine (40$)
 * uv pack master pro (29$) https://glukoz.gumroad.com/l/uvpackmaster2
-* 
+
+
+# palette low poly
+* https://lospec.com/
+

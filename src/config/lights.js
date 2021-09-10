@@ -10,7 +10,7 @@ const lights = {
         'ambient':{
             enable: false,
             type: 'ambient',
-            color: new THREE.Color(0x000000),
+            color: new THREE.Color(0xFFFFFF),
             intensity: 1
         },
 
@@ -28,16 +28,16 @@ const lights = {
         },
 
         'point':{
-            enable:true,
+            enable:false,
             type: 'point',
-            showHelper:false,
+            showHelper:true,
             color:new THREE.Color( 0xffffff ),
             intensity:1,
 
             position:{
-                x: 0,
-                y: 1.2,
-                z: 4
+                x: 2,
+                y: 2,
+                z: -6
             }
         },
 
@@ -50,8 +50,8 @@ const lights = {
             intensity:2,
             position:{
                 x: -3,
-                y: 1.2,
-                z: 4
+                y: 2,
+                z: 5
             }
         }
     }

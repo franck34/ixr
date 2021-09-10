@@ -2,6 +2,19 @@ import * as THREE from 'three';
 
 const dolly = {
 
+    speedFactor:[
+        0.1,
+        0.1,
+        0.1,
+        1
+    ],
+
+    camera:{
+        fov:50,
+        near:0.1,
+        far:350000,
+    },
+
     initial:{
         screen:{
             position:[ 0.0, 1.6, 6.0 ],

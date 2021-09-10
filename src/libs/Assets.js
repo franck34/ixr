@@ -104,7 +104,6 @@ function Assets(world, config) {
         object.position.y = v.y || 0.0;
         object.position.z = v.z || 0.0;
     
-        console.log(object.position);
     }
     
     function applyRotation( options, object ) {
@@ -124,6 +123,19 @@ function Assets(world, config) {
         object.rotation.x = v.x || 0.0;
         object.rotation.y = v.y || 0.0;
         object.rotation.z = v.z || 0.0;
+    }
+
+    function applyUV2( options, object ) {
+        
+        if ( !object.isMesh ) {
+            return;
+        }
+
+        if (!options.material) return;
+        if (!options.material.aoMap) return;
+
+        object.geometry.attributes.uv2 = object.geometry.attributes.uv;
+    
     }
     
     function loadModel(world, options) {
@@ -190,41 +202,97 @@ function Assets(world, config) {
         }
 
         let bakedTexture;
-        if (options.backed) {
-            bakedTexture = textureLoader.load( options.backed );
+        if (options.baked) {
+            bakedTexture = textureLoader.load( options.baked );
             bakedTexture.flipY = false;
             bakedTexture.encoding = THREE.sRGBEncoding;
         }
+
+        let customMaterial;
+        let aoMap;
+        if (options.material) {
+            let colorPalette;
+            let colorsEmissivePalette;
+            if (options.material.color) {
+                colorPalette = textureLoader.load( options.material.color );
+                colorPalette.flipY = false;
+                colorPalette.encoding = THREE.sRGBEncoding;
+            }
+
+            if (options.material.emissive) {
+                colorsEmissivePalette = textureLoader.load( options.material.emissive );
+                colorsEmissivePalette.flipY = false;
+                colorsEmissivePalette.encoding = THREE.sRGBEncoding;
+            }
+
+            if (options.material.aoMap) {
+                aoMap = textureLoader.load( options.material.aoMap );
+                aoMap.flipY = false;
+                aoMap.encoding = THREE.sRGBEncoding;
+            }
+
+            // MeshLambertMaterial
+            customMaterial = new THREE.MeshLambertMaterial({
+                color:0xFFFFFF,
+                map: colorPalette,
+                emissiveMap:colorsEmissivePalette,
+                emissiveIntensity:1,
+                aoMap
+            });
+        }
+
+        const vitreMaterial = new THREE.MeshStandardMaterial({
+            color:0xFFFFFF,
+            transparent: true,
+            opacity: 0.2,
+            emissive:0xFF0000,
+            emissiveIntensity:100,
+            roughness:1
+        });
 
         function onLoad(gltf) {
 
             console.log('Assets:loadAsset:onLoad', gltf.scene);
 
             let bakedMaterial;
-            if (options.backed) {
-                bakedMaterial = new THREE.MeshBasicMaterial({ map: bakedTexture });
+            if (options.baked) {
+                bakedMaterial = new THREE.MeshBasicMaterial({
+                    map: bakedTexture,
+                    //Important to avoid z-index in OC2, must be false
+                    depthTest: true,
+                    depthWrite: true,
+                    //polygonOffset: true,
+                    //polygonOffsetFactor: 1
+                });
+                console.log('using baked texture');
             } else {
-                bakedMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+                //bakedMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
             }
 
-            const vitreMaterial = new THREE.MeshStandardMaterial({
-                color:0xFFFFFF,
-                transparent: true,
-                opacity: 0.2,
-                emissive:0xFF0000,
-                emissiveIntensity:100,
-            });
-
+            let i = 0;
             gltf.scene.traverse(child => {
+
+                i+=1;
+                //child.renderOrder = i;
+                //child.wireframe = options.wireframe || false;
+
                 applyShadow(options, child);
-                child.material = bakedMaterial;
+
+                if (bakedMaterial) {
+                    child.material = bakedMaterial;
+                }
+
+                if (customMaterial) {
+                    child.material = customMaterial;
+                }
+
                 if (textureEquirec) {
                     //child.material.envMap = textureEquirec;
                 }
 
                 if (child.material) {
                     child.material.needsUpdate = true;
-                    //child.material.side = THREE.DoubleSide;
+                    child.material.side = THREE.DoubleSide;
                 }
 
                 if (child.name.match(/vitre/)) {
@@ -232,11 +300,11 @@ function Assets(world, config) {
                 }
             });
 
-
             applyScale( options, gltf.scene );
             applyPosition( options, gltf.scene );
             applyRotation( options, gltf.scene );
             applyAnimation( options, gltf.scene );
+            applyUV2( options, gltf.scene );
 
             world.add( gltf.scene );
             

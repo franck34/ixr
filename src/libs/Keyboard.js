@@ -6,7 +6,8 @@ function Keyboard(world, config) {
     config.keydown = { };
     config.keyup = { };
 
-    const status = {};
+    const status = { };
+    let keyCount = 0;
 
     window.addEventListener('keydown', onKeyDown);
     window.addEventListener('keyup', onKeyUp);
@@ -31,98 +32,110 @@ function Keyboard(world, config) {
 
     function loopKeys( delta, time ) {
 
+        //console.log('loopKeys', Date.now(), status);
+        keyCount = 0;
+
         for ( const k in status ) {
-            status[ k ].since = delta; 
-            config.keydown[ k ]( delta, time, status[k].ev );
+
+            status[ k ].since = delta;
+            status[ k ].handler( delta, time, status[k].ev );
+            status[ k ].consummed = true;
+            delete status[ k ];
+
         }
 
     }
 
-    function getConfigHandler( ev ) {
+    function getConfigHandler( evName, ev ) {
 
-        let handler = config.keydown[ ev.key ];
+        let handlers = config[ evName ][ ev.key ];
 
-        if ( !r ) {
+        if ( !handlers ) {
 
-            handler = config.keydown[ ev.code ];
+            handlers = config[ evName ][ ev.code ];
 
         }
 
-
-        if ( handler ) {
-            
-            return {
-                
-                id:ev.code,
-                handler
-            
-            }
-        }
-
-
-        return undefined;
+        return handlers;
 
     }
 
     function onKeyDown(ev) {
 
+        ev.stopPropagation();
+
         const now = Date.now();
         
-        let handler = getConfigHandler(ev);
+        let handler = getConfigHandler('keydown', ev);
         if (!handler) {
+            console.log('no handler', ev.key, ev.code)
             return;
         }
 
-        if (!statusKeys[ev.key]) {
-            statusKeys[ev.key] = { start: now, since: 0, ev };
-            console.log('onKeyDown - key ', ev.key);
+        const obj = { start: now, since: 0, ev, handler };
+
+        let inserted = false;
+        if (!status[ev.key] || !status[ev.code]) {
+            status[ev.key] = obj;
+            inserted = true;
         }
         
-        if (!statusCodes[ev.code]) {
-            statusCodes[ev.code] = { start: now, since: 0, ev, handler };
-            console.log('onKeyDown - code ', ev.code);
+        if (!status[ev.code]) {
+            status[ev.code] = obj;
+            inserted = true;
         }
         
+        if (inserted) {
+            //console.log('onKeyDown', ev.key, ev.code);
+        }
 
     }
-    
+
     function onKeyUp(ev) {
 
-        const handler = config.keyup.keys[ev.key] || config.keyup.codes[ev.code];
-        if (!handler) return;
+        ev.stopPropagation();
+
+        let handler = getConfigHandler('keyup', ev);
+        if (!handler) {
+            return;
+        }   
         
-        console.log('onKeyUp', ev.key, ev.code);
-        delete statusKeys[ev.key];
-        delete statusCodes[ev.code];
+        //console.log( 'onKeyUp', ev.key, ev.code );
 
-        handler(ev);
+        handler( 0, 0, ev );
 
+        delete status[ev.key];
+        delete status[ev.code];
+
+        return false;
     }
-
 
     function addKeyListener(options) {
 
-        if (!options.event) {
-            throw new Error('addKeyListener: event type is mandatory (i.e keydown)');
+        if (!options.id) {
+            throw new Error('addKeyListener: missing id (ev.code or ev.key)');
         }
 
-        if (options.event != 'keydown' && options.event != 'keyup') {
-            throw new Error('addKeyListener: event type not allowed');
+        const allowed = [ 'keyup', 'keydown' ];
+        let eventName;
+        let handlerType;
+
+        for (eventName of allowed) {
+            
+            if (!options[eventName]) continue;
+            console.log('event', eventName);
+
+            handlerType = typeof options[eventName];
+            if ( handlerType!= 'function' ) {
+                throw new Error(`addKeyListener: event ${eventName}, expected a function, received ${handlerType}`);
+            }
+
+            console.log(`addKeyListener: register event ${eventName} id=${options.id}`);
+            config[eventName][options.id] = options[eventName];
         }
 
-        if (options.key) {
-
-            console.log(`addKeyListener: adding ${options.event} key ${options.key}`);
-            config[options.event]['keys'][options.key] = options.handler;
-
-        }
-
-        if (options.code) {
-
-            console.log(`addKeyListener: adding handler ${options.event} code ${options.code}`);
-            config[options.event]['codes'][options.code] = options.handler;
-
-        }
+        console.log(config);
+        return;
 
     }
 

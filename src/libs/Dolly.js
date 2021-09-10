@@ -84,21 +84,23 @@ function Dolly(world, config) {
         dolly.name = "dolly";
         dollyReset();
 
-        dolly.run = false;
+        dolly.status = 'idle'; // walking, running
+        dolly.moving = false;
+
         dolly.canJump = false;
         dolly.onObject = false;
         
         dolly.velocity = new THREE.Vector3();
         dolly.direction = new THREE.Vector3();
         dolly.vector = new THREE.Vector3(),
-        dolly.runRatio = 1.07;
+        dolly.runRatio = 1.5;
 
         dolly.add(camera);
         //dolly.add(panel);
 
         const dollyHelper = new THREE.BoxHelper(dolly);
         scene.add(dolly);
-        //0scene.add(dollyHelper);
+        //scene.add(dollyHelper);
         
         world.set('dolly', dolly);
 
@@ -108,21 +110,225 @@ function Dolly(world, config) {
         PubSub.subscribe('XREnter', dollyInitialPositionXR);
         PubSub.subscribe('XRExit', dollyInitialPositionScreen);
 
-        // setup keyboard
-        const keyboardManager = world.get('keyboardManager');
-        if (keyboardManager) {
-            keyboardManager.addKeyListener({
-                id:'KeyW',
-                event:'keydown',
-                handler:() => {
-                    dolly.moveForward = true;
-                }
-            });
-        } else {
-            console.warn('could not attach dolly to keyboardManager');
-        }
- 
+        initPCKeyboard();
+        initPCMouse();
+
         dollyInitialPositionScreen();
+    }
+
+    function initPCMouse() {
+
+    }
+
+    function initPCKeyboard() {
+
+        function handleKeydownShift( ev ) {
+
+            if ( ev.code != 'ShiftLeft' ) return false;
+
+            // SHIFT KEY PRESSED (run)
+
+            if ( dolly.status === 'running' ) {
+
+                // already running, no changes
+
+            } else {
+
+                if (dolly.status === 'walking') {
+
+                    console.log('SWITCH WALKING TO RUNNING');
+
+                    dolly.status = 'running';
+
+                    if ( dolly.moveX ) {
+                        dolly.moveXoriginal = dolly.moveX;
+                        dolly.moveX = dolly.moveX * dolly.runRatio;
+                    }
+
+                    if ( dolly.moveY ) {
+                        dolly.moveYoriginal = dolly.moveY;
+                        dolly.moveY = dolly.moveY * dolly.runRatio;
+                    }
+
+                    if ( dolly.moveZ ) {
+                        dolly.moveZoriginal = dolly.moveZ;
+                        dolly.moveZ = dolly.moveZ * dolly.runRatio;
+                    }
+
+                }
+
+            }
+
+            return true;
+
+        }
+
+        function handleKeyupShift( ev ) {
+            
+            if ( ev.code != 'ShiftLeft' ) return false;
+
+            if ( dolly.status ===' running' ) {
+
+                console.log('SWITCH RUNNING TO WALKING', dolly.moveZ);
+                dolly.status = 'walking';
+
+            }
+
+            return true;
+
+        }
+        
+        function showStatus() {
+            
+            if ( dolly.moveX === 0 && dolly.moveY === 0 && dolly.moveZ === 0 ) {
+
+                if (dolly.status != 'idle') {
+
+                    console.log('SWITCH MOVING TO IDLE');
+                    dolly.moving = false;
+                    dollyReset();
+                    
+                }
+                
+            }
+
+        }
+        function addKeyEvent(key, moveDirection, moveAxis, moveAxisValue) {
+
+            keyboardManager.addKeyListener( {
+                id:key,
+                keydown:( delta, time, ev ) => {
+
+                    if (handleKeydownShift(ev)) {
+
+                        if (dolly.status === 'walking') {
+
+                            console.log('SWITCH WALKING TO RUNNING');
+                            dolly.status = 'running';
+
+                        }
+                            
+                        return;
+                    }
+
+                    if (dolly.status === 'idle') {
+
+                        console.log('SWITCH IDLE TO WALKING');
+                        dolly.status = 'walking';
+
+                    }
+
+                    if ( moveDirection ) {
+
+                        dolly[ moveDirection ] = true;
+                        dolly.moving = true;
+                    }
+                    
+                    if ( moveAxis ) {
+
+                        dolly[ moveAxis ] = moveAxisValue;
+                        dolly.moving = true;
+
+                    }
+                    
+                },
+
+                keyup:( delta, time, ev ) => {
+
+                    if (handleKeyupShift(ev)) {
+
+                        if (dolly.status === 'running') {
+
+                            console.log('SWITCH RUNNING TO WALKING');
+                            dolly.status = 'walking';
+                            
+                            if ( dolly.moveX ) {
+                                dolly.moveX = dolly.moveXoriginal || 0;
+                            }
+
+                            if ( dolly.moveY ) {
+                                dolly.moveY = dolly.moveYoriginal || 0;
+                            }
+
+                            if ( dolly.moveZ ) {
+                                dolly.moveZ = dolly.moveZoriginal || 0;
+                            }
+    
+                        }
+
+                        showStatus();
+                        return;
+                    }
+
+                    if ( moveDirection ) {
+                        dolly[ moveDirection ] = false;
+                    }
+                    
+                    if ( moveAxis ) {
+                        dolly[ moveAxis ] = 0;
+                    }
+
+                    showStatus();
+                    
+                }
+            });  
+
+        }
+
+        const keyboardManager = world.get('keyboardManager');
+
+        if (keyboardManager) {
+
+            addKeyEvent('KeyW', 'moveForward', 'moveZ', -1);
+            addKeyEvent('KeyS', 'moveBackward', 'moveZ', 1);
+            addKeyEvent('KeyA', 'moveLeft', 'moveX', -1);
+            addKeyEvent('KeyD', 'moveRight', 'moveX', 1);
+            addKeyEvent('ShiftLeft');
+
+            
+            /*
+            keyboardManager.addRendererLoop(( delta, time ) => {
+                
+                if ( dolly.walking ) {
+
+                    if (dolly.previousStatus != 'walking') {
+                        console.log('dolly is walking');
+                        dolly.running = false;
+                        dolly.previousStatus = 'walking';
+                    }
+
+                } else if ( dolly.running ) {
+
+                    if (dolly.previousStatus != 'running') {
+                        console.log('dolly is running');
+                        dolly.walking = false;
+                        dolly.previousStatus = 'walking';
+                    }
+
+                } else {
+
+                    dolly.walking = false;
+                    dolly.walking = false;
+                    console.log('dolly is idle');
+                }
+
+            });
+            */
+
+            keyboardManager.addKeyListener( {
+                id:'Escape',
+                keydown:( delta, time, ev ) => {
+                    
+                },
+                keyup:( delta, time, ev ) => {
+                    dollyReset();
+                }
+            }); 
+
+        } else {
+            console.warn('could not attach dolly to keyboardManager; keyboardManager not found');
+        }
+        
     }
 
     function dollyReset() {
@@ -134,6 +340,8 @@ function Dolly(world, config) {
         dolly.moveUp = false;
         dolly.moveDown = false;
         dolly.rotating = false;
+        dolly.moving = false;
+        dolly.status = 'idle';
         dolly.moveX = 0;
         dolly.moveY = 0;
         dolly.moveZ = 0;
@@ -446,19 +654,19 @@ function Dolly(world, config) {
 
         if ( dolly.moveLeft || dolly.moveRight ) {
             v = config.speedFactor[0] * dolly.moveX;
-            console.log('XR Dolly moveX', v);
+            //console.log('XR Dolly moveX', v);
             dolly.translateX(v);
         }
 
         if ( dolly.moveUp || dolly.moveDown ) {
             v = config.speedFactor[1] * inversSign(dolly.moveY);
-            console.log('XR Dolly moveY', v);
+            //console.log('XR Dolly moveY', v);
             dolly.translateY(v);
         }
 
         if ( dolly.moveForward || dolly.moveBackward ) {
             v = config.speedFactor[2] * dolly.moveZ;
-            console.log('XR Dolly moveZ', v);
+            //console.log('XR Dolly moveZ', v);
             dolly.translateZ(v);
         }
 
@@ -477,9 +685,7 @@ function Dolly(world, config) {
     }
 
     function renderDolly(timeDelta) {
-        
-        dollyReset();
-        
+               
         if (!renderer || !renderer.threeObject) {
             console.log('XR renderer not ready');
             // renderer is not yet ready
@@ -489,12 +695,11 @@ function Dolly(world, config) {
         const session = renderer.threeObject.xr.getSession();
 
         if (!session || !xrCamera) {
-            return dollyMove();
+            dollyMove();
+            return;
         }
 
-        if (!session) {
-            return dollyMove();
-        }
+        dollyReset();
 
         if (!isIterable(session.inputSources)) {
             // prevent console errors if only one input source
