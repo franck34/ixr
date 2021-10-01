@@ -84,6 +84,7 @@ module.exports = {
                 ]
             },
 
+            /*
             // Shaders
             {
                 test: /\.(glsl|vs|fs|vert|frag)$/,
@@ -93,6 +94,7 @@ module.exports = {
                     'glslify-loader'
                 ]
             }
+            */
         ]
     }
 };
