@@ -2,7 +2,7 @@
 const pbrs = {
     items:{
         'wood':{
-            disable:false,
+            disable:true,
             basepath:'wood_0029/',
             basename:'wood_0029',
 
