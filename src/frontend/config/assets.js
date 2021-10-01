@@ -22,7 +22,7 @@ const assets = {
                 aoMap:'/blender/bakes/MergedBake_Bake1_cyclesbake_AO.jpg'
             },
             */
-            bake:'/blender/scenes/showroom/showroom.png',
+            bake:'/blender/scenes/showroom/showroom.jpg',
             //envmap:'/3d/starskyhdrispherical_map_by_kirriaa.jpg',
             receiveShadow:false,
             castShadow:false,
