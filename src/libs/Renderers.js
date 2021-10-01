@@ -105,6 +105,8 @@ function Renderer( world, name, config ) {
         composer.addPass( saoPass );
         composer.addPass( renderPass );
         
+        renderer.setRenderTarget( composer.readBuffer );
+
     }
     
 

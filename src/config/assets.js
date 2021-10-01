@@ -13,7 +13,7 @@ const assets = {
             disable:false,
             rayAsset:true,
             type:'Model',
-            file:'/blender/showroom.glb',
+            file:'/blender/scenes/showroom/showroom.glb',
             wireframe: true,
             /*
             material:{
@@ -22,7 +22,7 @@ const assets = {
                 aoMap:'/blender/bakes/MergedBake_Bake1_cyclesbake_AO.jpg'
             },
             */
-            bake:'/blender/showroom.png',
+            bake:'/blender/scenes/showroom/showroom.png',
             //envmap:'/3d/starskyhdrispherical_map_by_kirriaa.jpg',
             receiveShadow:false,
             castShadow:false,
