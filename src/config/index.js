@@ -1,6 +1,7 @@
 import { renderers } from './renderers.js';
 import { shaders } from './shaders.js';
 import { scenes } from './scenes.js';
+import { pbrs } from './pbrs.js';
 import { assets } from './assets.js';
 import { cameras } from './cameras.js';
 import { lights } from './lights.js';
@@ -10,9 +11,11 @@ import { dolly } from './dolly.js';
 
 const config = {
 
+    logLevel:'debug',
     renderers,
     shaders,
     scenes,
+    pbrs,
     assets,
     lights,
     cameras,
@@ -20,6 +23,8 @@ const config = {
     controls,
     dolly
     
-}
+};
 
-export { config }
+localStorage.setItem( 'log', config.logLevel || 'debug' );
+
+export { config };

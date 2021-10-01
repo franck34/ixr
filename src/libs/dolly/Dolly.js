@@ -4,10 +4,10 @@ import { merge } from '../utils/merge.js';
 import { KeyboardControl } from './KeyboardControl.js';
 import { MouseControl } from './MouseControl.js';
 import { Crosshair } from './Crosshair.js';
+import { Gun } from './FakeGun.js';
+import { Raycaster } from './Raycaster.js';
 
-function Dolly(world, config) {
-
-    console.log('XR', config);
+function Dolly( context, config ) {
 
     const self = this;
 
@@ -19,7 +19,7 @@ function Dolly(world, config) {
         axiesMinThreshold: 0.2,
         speedFactorMax: 0.15,
         gravity: 9.8,
-        stayOnFloor:false,
+        stayOnFloor:true,
         speedFactor:[
             0.04,
             0.1,
@@ -41,18 +41,21 @@ function Dolly(world, config) {
                 rotation:[ 0.0, 0.0, 0.0 ]
             }
         }
-    }
+    };
 
-    config = merge(defaults, config || {});
+    let useInitialPosition = 'screen';
 
-    console.log('Dolly', config);
+    config = merge( defaults, config || {} );
 
-    const scene = world.get3('scene.main');
-    const renderer = world.get('renderer.main');
+    const scene = context.get3( 'scene.main' );
+
+    console.log( 'scene', scene );
+
+    const renderer = context.get( 'renderer.main' );
     const prevGamePads = new Map();
     
-    let dolly, camera, xrCamera, old, data, textPanel, controller;
-    let handedness = "unknown";
+    let dolly, camera, xrCamera, old, data, textPanel;
+    let handedness = 'unknown';
     let dummyCam;
 
     init();
@@ -67,20 +70,18 @@ function Dolly(world, config) {
             config.camera.far
         );
 
-        world.set('camera.main', camera);
-
-        textPanel = new TextPanel(world);
+        textPanel = new TextPanel( context );
         //world.debugPanel = panel;
         textPanel.position.x = 0;
         textPanel.position.y = 1;
         textPanel.position.z = 1;
-        scene.add(textPanel);
+        scene.add( textPanel );
 
         dummyCam = new THREE.Object3D();
-        camera.add(dummyCam); 
+        camera.add( dummyCam ); 
         
         const geometry = new THREE.BoxGeometry( 1, 1, 1 );
-        const material = new THREE.MeshBasicMaterial( {color: 0x00ff00, wireframe: true, visible:false} );
+        const material = new THREE.MeshBasicMaterial( { color: 0x00ff00, wireframe: true, visible:false } );
         dolly = new THREE.Mesh( geometry, material );
 
         //dolly = new THREE.Object3D();
@@ -88,43 +89,50 @@ function Dolly(world, config) {
         //const helper = new THREE.BoxHelper( dolly, 0xffffff );
         //scene.add( helper );
 
-        dolly.name = "dolly";
+        dolly.name = 'dolly';
         dolly.dollyReset = dollyReset;
         dollyReset();
-
-
-        dolly.status = 'idle'; // walking, running
-        dolly.moving = false;
-
-        dolly.canJump = false;
-        dolly.onObject = false;
-        
+       
         dolly.velocity = new THREE.Vector3();
         dolly.direction = new THREE.Vector3();
-        dolly.vector = new THREE.Vector3(),
-        dolly.runRatio = 3;
+        dolly.vector = new THREE.Vector3();
+        dolly.runRatio = 2;
 
-        dolly.add(camera);
+        dolly.add( camera );
+
+        const gun = new Gun( context, config, scene, camera, dolly );
         //dolly.add(panel);
 
-        scene.add(dolly);
+        scene.add( dolly );
 
-        world.set('dolly', dolly);
+        context.set( 'dolly', dolly );
+        context.set( 'camera.main', camera );
 
-        renderer.addRenderJob(renderDolly);
+        renderer.addRenderJob( renderDolly );
         //renderer.addRenderJob(renderInformations);
     
-        PubSub.subscribe('XREnter', dollyInitialPositionXR);
-        PubSub.subscribe('XRExit', dollyInitialPositionScreen);
+        PubSub.subscribe( 'XREnter', dollyInitialPositionXR );
+        PubSub.subscribe( 'XRExit', dollyInitialPositionScreen );
 
-        new KeyboardControl(world, config, dolly);
-        new MouseControl(world, config, dolly);
+        dolly.keyboardControl = new KeyboardControl( context, config, dolly );
+        dolly.mouseControl = new MouseControl( context, config, dolly );
 
-        const crosshair = new Crosshair(world, config);
-        crosshair.adjustToCamera(camera);
-        camera.add( crosshair.mesh );
+        dolly.crosshair = new Crosshair( context, config );
+        dolly.crosshair.adjustToCamera( camera );
+
+        dolly.raycaster = new Raycaster( context, config );
+        dolly.raycaster.setOrigin( gun.mesh );
+        dolly.raycaster.onIntercept( ( crossPoints ) => {
+            crossPoints.map( ( item, i ) => {
+                //console.log(`intersects #${i}, distance ${item.distance}, object name ${item.object.name}, point ${item.point.x}, ${item.point.y}, ${item.point.z}`);            
+            } );
+        } );
+        dolly.raycaster.showImpacts();
+
+        camera.add( dolly.crosshair.mesh );
 
         dollyInitialPositionScreen();
+
     }
 
     function dollyReset() {
@@ -142,14 +150,18 @@ function Dolly(world, config) {
         dolly.moveY = 0;
         dolly.moveZ = 0;
         dolly.rotatingY = 0;
+        dolly.canJump = false;
+        dolly.onObject = false;
 
     }
     
-    function dollyInitialPositionXR(session) {
+    function dollyInitialPositionXR( session ) {
 
-        console.log('dollyInitialPositionXR', session);
+        console.log( 'dollyInitialPositionXR', session );
+        
+        useInitialPosition = 'xr';
 
-        xrCamera = renderer.threeObject.xr.getCamera(camera);
+        xrCamera = renderer.threeObject.xr.getCamera( camera );
 
         // attached to camera container
         /*
@@ -168,16 +180,18 @@ function Dolly(world, config) {
         textPanel.position.y = -1.3;
         textPanel.position.z = -1;
 
-        dolly.position.set(...config.initial.xr.position);
-        console.log('XR initial xr dolly position', dolly.position);
+        dolly.position.set( ...config.initial.xr.position );
+        console.log( 'XR initial xr dolly position', dolly.position );
 
     }
 
-    function dollyInitialPositionScreen(session) {
+    function dollyInitialPositionScreen( session ) {
 
-        if (!textPanel) return;
+        if ( !textPanel ) return;
 
-        console.log('dollyInitialPositionScreen', session);
+        useInitialPosition = 'screen';
+
+        console.log( 'dollyInitialPositionScreen', session );
         // attached to dolly
         //textPanel.position.x = 0;
         //textPanel.position.y = 1.38;
@@ -187,58 +201,58 @@ function Dolly(world, config) {
         textPanel.position.x = 0;
         textPanel.position.y = -0.35;
         textPanel.position.z = -1;
-        textPanel.lookAt(dolly.position);
+        textPanel.lookAt( dolly.position );
 
-        dolly.position.set(...config.initial.screen.position);
-        console.log('XR initial screen dolly position', dolly.position, camera.position);
+        dolly.position.set( ...config.initial.screen.position );
+        console.log( 'XR initial screen dolly position', dolly.position, camera.position );
 
-        console.log('XR dolly.position', dolly.position);
+        console.log( 'XR dolly.position', dolly.position );
         return;
     }
 
-    function pulse(source) {
+    function pulse( source ) {
 
-        if (!source.gamepad.hapticActuators) return;
-        if (!source.gamepad.hapticActuators[0]) return;
+        if ( !source.gamepad.hapticActuators ) return;
+        if ( !source.gamepad.hapticActuators[0] ) return;
 
-        var pulseStrength = Math.abs(data.axes[2]) + Math.abs(data.axes[3]);
-        if (pulseStrength > 0.75) {
+        var pulseStrength = Math.abs( data.axes[2] ) + Math.abs( data.axes[3] );
+        if ( pulseStrength > 0.75 ) {
             pulseStrength = 0.75;
         }
 
-        var didPulse = source.gamepad.hapticActuators[0].pulse(pulseStrength, 100);
+        var didPulse = source.gamepad.hapticActuators[0].pulse( pulseStrength, 100 );
 
     }
 
-    function isLeftThumbstick(data) {
-        if (data.handedness == "left") {
+    function isLeftThumbstick( data ) {
+        if ( data.handedness == 'left' ) {
             return true;
         }
         return false;
     }
 
     
-    function isIterable(obj) {
+    function isIterable( obj ) {
         // checks for null and undefined
-        if (obj == null) {
+        if ( obj == null ) {
             return false;
         }
-        return typeof obj[Symbol.iterator] === "function";
+        return typeof obj[Symbol.iterator] === 'function';
     }
 
-    function handleButtons(data, value, i) {
+    function handleButtons( data, value, i ) {
 
-        if (value === old.buttons[i] || Math.abs(value) < config.buttonMinTrigger ) return;
+        if ( value === old.buttons[i] || Math.abs( value ) < config.buttonMinTrigger ) return;
         
-        if (value === 1) {
+        if ( value === 1 ) {
             
-            console.log("handleButtons: Button" + i + "Down");
-            if (data.handedness == "left") {
-                console.log("Left Paddle Down");                
+            console.log( 'handleButtons: Button' + i + 'Down' );
+            if ( data.handedness == 'left' ) {
+                console.log( 'Left Paddle Down' );                
             } else {
-                console.log("handleButtons: Right Paddle Down");
-                if (i == 1) {
-                    dolly.rotateY(THREE.Math.degToRad(1));
+                console.log( 'handleButtons: Right Paddle Down' );
+                if ( i == 1 ) {
+                    dolly.rotateY( THREE.Math.degToRad( 1 ) );
                 }
             }
 
@@ -246,17 +260,17 @@ function Dolly(world, config) {
         
             //console.log("handleButtons: Button " + i + " Up");
 
-            if (i!=0) {
+            if ( i!=0 ) {
 
                 //use the paddle buttons to rotate
-                if (data.handedness == "left") {
+                if ( data.handedness == 'left' ) {
 
-                    console.log("handleButtons: Left Paddle Down");
-                    dolly.rotateY(-THREE.Math.degToRad(Math.abs(value)));
+                    console.log( 'handleButtons: Left Paddle Down' );
+                    dolly.rotateY( -THREE.Math.degToRad( Math.abs( value ) ) );
 
                 } else {
-                    console.log("handleButtons: Right Paddle Down");
-                    dolly.rotateY(THREE.Math.degToRad(Math.abs(value)));
+                    console.log( 'handleButtons: Right Paddle Down' );
+                    dolly.rotateY( THREE.Math.degToRad( Math.abs( value ) ) );
                 }
             }
         }
@@ -265,20 +279,20 @@ function Dolly(world, config) {
 
     function debugHandleAxesEastWest( data, v ) {
 
-        if (isLeftThumbstick( data )) {
+        if ( isLeftThumbstick( data ) ) {
         
             if ( v < 0 ) {
-                console.log('handleAxes: left on left thumbstick', v);
-             } else {
-                console.log('handleAxes: right on left thumbstick', v)
-             }
+                console.log( 'handleAxes: left on left thumbstick', v );
+            } else {
+                console.log( 'handleAxes: right on left thumbstick', v );
+            }
              
         } else {
 
             if ( v > 0 ) {
-                console.log('handleAxes: right on right thumbstick', v);
+                console.log( 'handleAxes: right on right thumbstick', v );
             } else {
-                console.log('handleAxes: left on right thumbstick', v);
+                console.log( 'handleAxes: left on right thumbstick', v );
             }
 
         }
@@ -287,32 +301,32 @@ function Dolly(world, config) {
 
     function debugHandleAxesNorthSouth( data, v ) {
         
-        if ( isLeftThumbstick(data) ) {
+        if ( isLeftThumbstick( data ) ) {
 
-            if ( v > 0) {
-                console.log('handleAxes: down on left thumbstick');
+            if ( v > 0 ) {
+                console.log( 'handleAxes: down on left thumbstick' );
             } else {
-                console.log('handleAxes: up on left thumbstick');
+                console.log( 'handleAxes: up on left thumbstick' );
             }
 
         } else {
 
             if ( v > 0 ) {
-                console.log('handleAxes: down on right thumbstick');
+                console.log( 'handleAxes: down on right thumbstick' );
             } else {
-                console.log('handleAxes: up on right thumbstick');
+                console.log( 'handleAxes: up on right thumbstick' );
             }
 
         }
         
     }
 
-    function handleAxes(data, value, axisID) {
+    function handleAxes( data, value, axisID ) {
 
         // if thumbstick axis has moved beyond the minimum threshold from center, 
         // windows mixed reality seems to wander up to about .17 with no input
 
-        if ( Math.abs(value) <= config.axiesMinThreshold ) {
+        if ( Math.abs( value ) <= config.axiesMinThreshold ) {
 
             //axis below threshold - reset the speedFactor if it is greater than zero  or 0.025 but below our threshold
             /*
@@ -331,10 +345,10 @@ function Dolly(world, config) {
 
             const v = data.axes[2];
 
-            if (isLeftThumbstick(data)) {
+            if ( isLeftThumbstick( data ) ) {
                 
                 // left/right on left thumbstick: translateX
-                 dollyTranslateX( v );
+                dollyTranslateX( v );
                  
             } else {
                 
@@ -349,7 +363,7 @@ function Dolly(world, config) {
 
             const v = data.axes[3];
 
-            if ( isLeftThumbstick(data) ) {
+            if ( isLeftThumbstick( data ) ) {
 
                 // north/south on left thumbstick: translateZ
                 dollyTranslateZ( v );
@@ -357,7 +371,7 @@ function Dolly(world, config) {
             } else {
 
                 // north/south on right thumbstick: translateY
-                if (!config.stayOnFloor) {
+                if ( !config.stayOnFloor ) {
                     dollyTranslateY( v );
                 }
 
@@ -367,16 +381,16 @@ function Dolly(world, config) {
 
         }
 
-        world.controls && world.controls.update();
+        context.controls && context.controls.update();
     }
 
     function inversSign( num ) {
-        return num - (num * 2);
+        return num - ( num * 2 );
     }
 
     function dollyTranslateX( value ) {
 
-        console.log('dolly translateX', value);
+        console.log( 'dolly translateX', value );
 
         if ( value <= 0 ) {
             dolly.moveLeft = true;
@@ -389,7 +403,7 @@ function Dolly(world, config) {
 
     function dollyTranslateY( value ) {
 
-        console.log('dolly translateY', value);
+        console.log( 'dolly translateY', value );
 
         if ( value >= 0 ) {
             dolly.moveUp = true;
@@ -401,7 +415,7 @@ function Dolly(world, config) {
 
     function dollyTranslateZ( value ) {
 
-        console.log('dolly translateZ', value);
+        console.log( 'dolly translateZ', value );
 
         if ( value >= 0 ) {
             dolly.moveForward = true;
@@ -414,7 +428,7 @@ function Dolly(world, config) {
 
     function dollyRotateY( value ) {
 
-        if (value) {
+        if ( value ) {
             dolly.rotating = true;
             dolly.rotatingY = value;
         }
@@ -423,16 +437,19 @@ function Dolly(world, config) {
 
     function dollyRotateYReal() {
 
-        dolly.rotateY(-THREE.Math.degToRad(360/4));
+        dolly.rotateY( -THREE.Math.degToRad( 360/4 ) );
 
     }
 
     function limitY() {
-        if (config.stayOnFloor) {
-            if ( dolly.position.y != 1.6 ) {
-                dolly.position.y = 0;
-                dolly.canJump = true;
-            }
+
+        if ( !config.stayOnFloor ) {
+            return;
+        }
+
+        if ( dolly.position.y != config.initial[ useInitialPosition ].position[1] ) {
+            dolly.position.y = config.initial[ useInitialPosition ].position[1];
+            dolly.canJump = true;
         }
 
     }
@@ -451,25 +468,25 @@ function Dolly(world, config) {
         if ( dolly.moveLeft || dolly.moveRight ) {
             v = config.speedFactor[0] * dolly.moveX;
             //console.log('XR Dolly moveX', v);
-            dolly.translateX(v);
+            dolly.translateX( v );
         }
 
         if ( dolly.moveUp || dolly.moveDown ) {
-            v = config.speedFactor[1] * inversSign(dolly.moveY);
+            v = config.speedFactor[1] * inversSign( dolly.moveY );
             //console.log('XR Dolly moveY', v);
-            dolly.translateY(v);
+            dolly.translateY( v );
         }
 
         if ( dolly.moveForward || dolly.moveBackward ) {
             v = config.speedFactor[2] * dolly.moveZ;
             //console.log('XR Dolly moveZ', v);
-            dolly.translateZ(v);
+            dolly.translateZ( v );
         }
 
         if ( dolly.rotating ) {
             
             if ( config.smoothRotate ) {
-                dolly.rotateY(-THREE.Math.degToRad(dolly.rotatingY));
+                dolly.rotateY( -THREE.Math.degToRad( dolly.rotatingY ) );
                 return;
             }
 
@@ -480,64 +497,64 @@ function Dolly(world, config) {
         return true;
     }
 
-    function renderDolly(timeDelta) {
+    function renderDolly( timeDelta ) {
                
-        if (!renderer || !renderer.threeObject) {
-            console.log('XR renderer not ready');
+        if ( !renderer || !renderer.threeObject ) {
+            console.log( 'XR renderer not ready' );
             // renderer is not yet ready
             return;
         }        
                 
         const session = renderer.threeObject.xr.getSession();
 
-        if (!session || !xrCamera) {
+        if ( !session || !xrCamera ) {
             dollyMove();
             return;
         }
 
         dollyReset();
 
-        if (!isIterable(session.inputSources)) {
+        if ( !isIterable( session.inputSources ) ) {
             // prevent console errors if only one input source
             return;
         }
 
         let i = 0;
 
-        for (const source of session.inputSources) {
+        for ( const source of session.inputSources ) {
 
-            if (source && source.handedness) {
+            if ( source && source.handedness ) {
                 handedness = source.handedness; //left or right controllers
             }
             
-            if (!source.gamepad) {
+            if ( !source.gamepad ) {
                 continue;
             }
 
-            controller = renderer.threeObject.xr.getController(i++);
+            //let controller = renderer.threeObject.xr.getController( i++ );
 
             data = {
                 handedness: handedness,
-                buttons: source.gamepad.buttons.map((b) => b.value),
-                axes: source.gamepad.axes.slice(0)
+                buttons: source.gamepad.buttons.map( ( b ) => b.value ),
+                axes: source.gamepad.axes.slice( 0 )
             };
 
-            old = prevGamePads.get(source);
+            old = prevGamePads.get( source );
 
-            if (old) {
+            if ( old ) {
 
-                data.buttons.forEach((value, i) => {
-                    handleButtons(data, value, i);
-                });
+                data.buttons.forEach( ( value, i ) => {
+                    handleButtons( data, value, i );
+                } );
 
-                data.axes.forEach((value, i) => {
-                    handleAxes(data, value, i);
-                });
+                data.axes.forEach( ( value, i ) => {
+                    handleAxes( data, value, i );
+                } );
 
             }
             
             ///store this frames data to compare with in the next frame
-            prevGamePads.set(source, data);
+            prevGamePads.set( source, data );
         }
 
         return dollyMove();
@@ -545,37 +562,37 @@ function Dolly(world, config) {
     }
 
     
-    function roundCoordinates(obj) {
+    function roundCoordinates( obj ) {
 
         const m = 3;
 
         const ret = { 
-            x: obj.position.x.toFixed(m),
-            y: obj.position.y.toFixed(m),
-            z: obj.position.z.toFixed(m)
+            x: obj.position.x.toFixed( m ),
+            y: obj.position.y.toFixed( m ),
+            z: obj.position.z.toFixed( m )
         }
 
-        if (ret.x>=0) ret.x = '+'+ret.x;
-        if (ret.y>=0) ret.y = '+'+ret.y;
-        if (ret.z>=0) ret.z = '+'+ret.z;
+        if ( ret.x>=0 ) ret.x = '+'+ret.x;
+        if ( ret.y>=0 ) ret.y = '+'+ret.y;
+        if ( ret.z>=0 ) ret.z = '+'+ret.z;
 
         return ret;
 
     }
 
-    function roundOrientation(obj) {
+    function roundOrientation( obj ) {
 
         const m = 3;
 
         const ret = { 
-            x: obj.rotation.x.toFixed(m),
-            y: obj.rotation.y.toFixed(m),
-            z: obj.rotation.z.toFixed(m)
+            x: obj.rotation.x.toFixed( m ),
+            y: obj.rotation.y.toFixed( m ),
+            z: obj.rotation.z.toFixed( m )
         }
 
-        if (ret.x>=0) ret.x = ' '+ret.x;
-        if (ret.y>=0) ret.y = ' '+ret.y;
-        if (ret.z>=0) ret.z = ' '+ret.z;
+        if ( ret.x>=0 ) ret.x = ' '+ret.x;
+        if ( ret.y>=0 ) ret.y = ' '+ret.y;
+        if ( ret.z>=0 ) ret.z = ' '+ret.z;
 
         return ret;
 
@@ -586,16 +603,16 @@ function Dolly(world, config) {
         const m = 3;
 
         const ret = { 
-            x: config.speedFactor[0].toFixed(m),
-            y: config.speedFactor[1].toFixed(m),
-            z: config.speedFactor[2].toFixed(m),
-            w: config.speedFactor[3].toFixed(m),
+            x: config.speedFactor[0].toFixed( m ),
+            y: config.speedFactor[1].toFixed( m ),
+            z: config.speedFactor[2].toFixed( m ),
+            w: config.speedFactor[3].toFixed( m ),
         }
 
-        if (ret.x>=0) ret.x = ' '+ret.x;
-        if (ret.y>=0) ret.y = ' '+ret.y;
-        if (ret.z>=0) ret.z = ' '+ret.z;
-        if (ret.w>=0) ret.w = ' '+ret.w;
+        if ( ret.x>=0 ) ret.x = ' '+ret.x;
+        if ( ret.y>=0 ) ret.y = ' '+ret.y;
+        if ( ret.z>=0 ) ret.z = ' '+ret.z;
+        if ( ret.w>=0 ) ret.w = ' '+ret.w;
 
         return ret;
 
@@ -603,33 +620,33 @@ function Dolly(world, config) {
 
     let lc, rc, lo, ro, text, dco, dor, sf;
 
-    function renderInformations(delta) {
+    function renderInformations( delta ) {
        
         text = '';
-        if (world.controllers) {
-            lc = roundCoordinates(world.controllers.left);
-            rc = roundCoordinates(world.controllers.right);
+        if ( context.controllers ) {
+            lc = roundCoordinates( context.controllers.left );
+            rc = roundCoordinates( context.controllers.right );
             text = `LC ${lc.x} ${lc.y} ${lc.z} | `; // left controller position
             text+= `RC ${rc.x} ${rc.y} ${rc.z} | `; // right controller position
         }
 
-        dco = roundCoordinates(dolly);
-        dor = roundOrientation(dolly);
+        dco = roundCoordinates( dolly );
+        dor = roundOrientation( dolly );
         sf = roundSpeedFactor();
 
         text+= `DP ${dco.x} ${dco.y} ${dco.z} | `; // dolly position
         text+= `DT ${sf.x} ${sf.y} ${sf.z} ${sf.w}\n`; // dolly translation
 
-        if (world.controllers) {
-            lo = roundOrientation(world.controllers.left);
-            ro = roundOrientation(world.controllers.right);
+        if ( context.controllers ) {
+            lo = roundOrientation( context.controllers.left );
+            ro = roundOrientation( context.controllers.right );
             text+= `LO ${lo.x} ${lo.y} ${lo.z} | `; // left controller rotation
             text+= `RO ${ro.x} ${ro.y} ${ro.z} | `; // right controller rotation
         }
 
         text+= `DO ${dor.x} ${dor.y} ${dor.z}\n`; // dolly rotation
 
-        world.log.text = text;
+        context.log.text = text;
         return true;
     }
     
@@ -637,4 +654,4 @@ function Dolly(world, config) {
 
 }
 
-export { Dolly }
+export { Dolly };

@@ -1,15 +1,17 @@
+/* eslint-disable no-mixed-spaces-and-tabs */
 import * as THREE from 'three';
 import { Shapes } from './shapes/index.js';
 
-function Assets(world, config) {
+function Assets( world, config ) {
 
-    if (!config || typeof config != 'object') {
-        throw new Error('Assets: unexpected typeof of assetsConfig');
+    if ( !config || typeof config != 'object' ) {
+        throw new Error( 'Assets: unexpected typeof of assetsConfig' );
     }
 
     const assets = {};
-    const loader = world.get('loader');
+    const loader = world.get( 'loader' );
     const categories = {};
+    const rayAssets = [];
 
     const gltfLoader = loader.gltfLoader;
     const textureLoader = loader.textureLoader;
@@ -17,23 +19,22 @@ function Assets(world, config) {
 
     function applyAnimation( options, object ) {
 
-        console.log('applyAnimation', options);
-        if (!options.animate || options.animate.enable === false) {
+        console.log( 'Assets: applyAnimation', options );
+        if ( !options.animate || options.animate.enable === false ) {
             return;
         }
         
+        function rotateEarth( delta, time ) {
+            if ( r.x ) object.rotation.x += r.x * delta;
+            if ( r.y ) object.rotation.y += r.y * delta;
+            if ( r.z ) object.rotation.z += r.z * delta;
+            return true;
+        }
+
         const r = options.animate.rotation;
-        if (r) {
-    
-            function rotateEarth(delta, time) {
-                if (r.x) object.rotation.x += r.x * delta;
-                if (r.y) object.rotation.y += r.y * delta;
-                if (r.z) object.rotation.z += r.z * delta;
-                return true;
-            }
-    
-            world.get('renderer.main').addRenderJob( rotateEarth );
-            console.log('apply animation', object.name, options.castShadow, options.receiveShadow);
+        if ( r ) {
+            world.get( 'renderer.main' ).addRenderJob( rotateEarth );
+            console.log( 'Assets: apply animation', object.name, options.castShadow, options.receiveShadow );
         }
     
     }
@@ -44,13 +45,13 @@ function Assets(world, config) {
             return;
         }
     
-        console.log('apply shadow', object.name, options.castShadow, options.receiveShadow);
+        console.log( 'apply shadow', object.name, options.castShadow, options.receiveShadow );
     
-        if (options.castShadow) {
+        if ( options.castShadow ) {
             object.castShadow = true;
         }
     
-        if (options.receiveShadow) {
+        if ( options.receiveShadow ) {
             object.receiveShadow = true;
         }
     
@@ -69,10 +70,10 @@ function Assets(world, config) {
     
     function applyScale( options, object ) {
     
-        if (!options.scale) return;
+        if ( !options.scale ) return;
     
         const v = options.scale;
-        if (v.xyz) {
+        if ( v.xyz ) {
             v.x = v.xyz;
             v.y = v.xyz;
             v.z = v.xyz;
@@ -81,24 +82,34 @@ function Assets(world, config) {
     
         //child.geometry.scale( v.x, v.y, v.z );
         //console.log(child.scale);
-        console.log('applyScale', object, v);
+        console.log( 'Assets: applyScale', object, v );
         object.scale.set( v.x, v.y, v.z );
     
+    }
+
+    function applyWireframe( options, object ) {
+
+        if ( typeof options.wireframe === 'boolean' ) {
+
+            object.material.wireframe = options.wireframe || false;
+
+        }
+
     }
     
     function applyPosition( options, object ) {
     
-        if (!options.position) return;
+        if ( !options.position ) return;
     
         const v = options.position;
-        if (v.xyz) {
+        if ( v.xyz ) {
             v.x = v.xyz;
             v.y = v.xyz;
             v.z = v.xyz;
             delete v.xyz;
         }
     
-        console.log('applyPosition', object, v);
+        console.log( 'Assets: applyPosition', object, v );
     
         object.position.x = v.x || 0.0;
         object.position.y = v.y || 0.0;
@@ -108,17 +119,17 @@ function Assets(world, config) {
     
     function applyRotation( options, object ) {
     
-        if (!options.rotation) return;
+        if ( !options.rotation ) return;
     
         const v = options.rotation;
-        if (v.xyz) {
+        if ( v.xyz ) {
             v.x = v.xyz;
             v.y = v.xyz;
             v.z = v.xyz;
             delete v.xyz;
         }
     
-        console.log('applyRotation', object, v);
+        console.log( 'Assets: applyRotation', object, v );
     
         object.rotation.x = v.x || 0.0;
         object.rotation.y = v.y || 0.0;
@@ -131,55 +142,57 @@ function Assets(world, config) {
             return;
         }
 
-        if (!options.material) return;
-        if (!options.material.aoMap) return;
+        if ( !options.material ) return;
+        if ( !options.material.aoMap ) return;
 
         object.geometry.attributes.uv2 = object.geometry.attributes.uv;
     
     }
     
-    function loadModel(world, options) {
+    function loadModel( world, options, name ) {
 
-        if (options.type != 'Model') return;
-        if (options.disable) return;
+        if ( options.type != 'Model' ) return;
+        if ( options.disable ) return;
 
-        if (typeof options.file != 'string') {
-            console.warn(`Assets: asset ${name}: actual file attribute is ${typeof item.file}, expected string`);
+        if ( typeof options.file != 'string' ) {
+            console.warn( `Assets: asset ${name}: actual file attribute is ${typeof item.file}, expected string` );
             return;
 
         }
 
+        
+        const pmremGenerator = new THREE.PMREMGenerator( world.get3( 'renderer.main' ) );
+        pmremGenerator.compileEquirectangularShader();
+        
+        function rgbeLoaderOnLoad( texture ) {
+            const envMap = pmremGenerator.fromEquirectangular( texture ).texture;
+            pmremGenerator.dispose();
+            console.log( 'environment', options.envmap, envMap );
+            world.get3( 'scene.main' ).environment = envMap;
+        }
+
         let textureEquirec;
 
-        if (options.envmap) {
+        if ( options.envmap ) {
             
-            if (options.envmap.match(/\.hdr/)) {
+            if ( options.envmap.match( /\.hdr/ ) ) {
 
-                const pmremGenerator = new THREE.PMREMGenerator( world.get3('renderer.main') );
-                pmremGenerator.compileEquirectangularShader();
             
-                function onLoad(texture) {
-                    const envMap = pmremGenerator.fromEquirectangular( texture ).texture;
-                    pmremGenerator.dispose();
-                    console.log('environment', options.envmap, envMap);
-                    world.get3('scene.main').environment = envMap;
-                }
-
                 rgbeLoader.load(
                     options.envmap,
-                    onLoad,
+                    rgbeLoaderOnLoad,
                     undefined,
-                    (err) => {
-                        console.error( 'An error occurred setting the environment');
+                    ( err ) => {
+                        console.error( 'An error occurred setting the environment' );
                     }
                 );
 
-            } else if (options.envmap.match(/\.png|\.jpe?g$/)) {
+            } else if ( options.envmap.match( /\.png|\.jpe?g$/ ) ) {
 
                 textureEquirec = textureLoader.load( options.envmap );
 			    textureEquirec.mapping = THREE.EquirectangularReflectionMapping;
 			    textureEquirec.encoding = THREE.sRGBEncoding;
-                world.get3('scene.main').background = textureEquirec;
+                world.get3( 'scene.main' ).background = textureEquirec;
 
             } else {
                 
@@ -201,46 +214,56 @@ function Assets(world, config) {
             }
         }
 
-        let bakedTexture;
-        if (options.baked) {
-            bakedTexture = textureLoader.load( options.baked );
-            bakedTexture.flipY = false;
-            bakedTexture.encoding = THREE.sRGBEncoding;
+        let bakeTexture;
+        let bakeMaterial;
+
+        if ( options.bake ) {
+            bakeTexture = textureLoader.load( options.bake );
+            bakeTexture.flipY = false;
+            bakeTexture.encoding = THREE.sRGBEncoding;
+
+            bakeMaterial = new THREE.MeshBasicMaterial( {
+                map: bakeTexture,
+                //Important to avoid z-index in OC2, must be false
+                depthTest: true,
+                depthWrite: true,
+            } );
         }
 
         let customMaterial;
         let aoMap;
-        if (options.material) {
+        if ( options.material ) {
             let colorPalette;
             let colorsEmissivePalette;
-            if (options.material.color) {
+            if ( options.material.color ) {
                 colorPalette = textureLoader.load( options.material.color );
                 colorPalette.flipY = false;
                 colorPalette.encoding = THREE.sRGBEncoding;
             }
 
-            if (options.material.emissive) {
+            if ( options.material.emissive ) {
                 colorsEmissivePalette = textureLoader.load( options.material.emissive );
                 colorsEmissivePalette.flipY = false;
                 colorsEmissivePalette.encoding = THREE.sRGBEncoding;
             }
 
-            if (options.material.aoMap) {
+            if ( options.material.aoMap ) {
                 aoMap = textureLoader.load( options.material.aoMap );
                 aoMap.flipY = false;
                 aoMap.encoding = THREE.sRGBEncoding;
             }
 
             // MeshLambertMaterial
-            customMaterial = new THREE.MeshLambertMaterial({
+            customMaterial = new THREE.MeshLambertMaterial( {
                 color:0xFFFFFF,
                 map: colorPalette,
                 emissiveMap:colorsEmissivePalette,
                 emissiveIntensity:1,
                 aoMap
-            });
+            } );
         }
 
+        /*
         const vitreMaterial = new THREE.MeshStandardMaterial({
             color:0xFFFFFF,
             transparent: true,
@@ -249,56 +272,99 @@ function Assets(world, config) {
             emissiveIntensity:100,
             roughness:1
         });
+        */
 
-        function onLoad(gltf) {
+        function replacePBRs( child ) {
 
-            console.log('Assets:loadAsset:onLoad', gltf.scene);
+            const pbrs = world.get( 'pbrs' );
 
-            let bakedMaterial;
-            if (options.baked) {
-                bakedMaterial = new THREE.MeshBasicMaterial({
-                    map: bakedTexture,
-                    //Important to avoid z-index in OC2, must be false
-                    depthTest: true,
-                    depthWrite: true,
-                    //polygonOffset: true,
-                    //polygonOffsetFactor: 1
-                });
-                console.log('using baked texture');
-            } else {
-                //bakedMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+            const customProperties = child.userData;
+            for ( const propertie in customProperties ) {
+                if ( propertie.match( /pbr/ ) ) {
+                    const name = propertie.replace( /^pbr_/ , '' );
+                    child.material = pbrs.getMaterial( name );
+                }
             }
 
-            let i = 0;
-            gltf.scene.traverse(child => {
+        }
 
-                i+=1;
+        function processChild( child ) {
+
+            if ( child instanceof THREE.Mesh ) {
+
+                // Trying to fix mouse raycaster
+                // console.warn( 'Assets: updateMatrix() & updateMatriwWorld()', child );
+                child.updateMatrix();
+                child.updateMatrixWorld();
+            
                 //child.renderOrder = i;
-                //child.wireframe = options.wireframe || false;
 
-                applyShadow(options, child);
+                replacePBRs( child );
 
-                if (bakedMaterial) {
-                    child.material = bakedMaterial;
+                applyWireframe( options, child );
+                applyShadow( options, child );
+
+                if ( bakeMaterial ) {
+                    child.material = bakeMaterial;
                 }
 
-                if (customMaterial) {
+                if ( customMaterial ) {
                     child.material = customMaterial;
                 }
 
-                if (textureEquirec) {
+                if ( textureEquirec ) {
                     //child.material.envMap = textureEquirec;
                 }
 
-                if (child.material) {
-                    child.material.needsUpdate = true;
+                if ( child.material ) {
+                    //child.material.needsUpdate = false;
                     child.material.side = THREE.DoubleSide;
                 }
 
+                if ( child.geometry ) {
+                    // Trying to fix mouse raycaster
+
+                    child.geometry.computeBoundingBox();
+                }
+
+
+                /*
                 if (child.name.match(/vitre/)) {
                     child.material = vitreMaterial;
                 }
-            });
+                */
+
+                if ( options.rayAsset ) {
+                    console.warn( 'Assets: pushing in raycaster list', child );
+                    rayAssets.push( child );
+                }
+            }
+
+            /*
+            if ( child instanceof THREE.Group && child.children.length) {
+                child.children.map(processChild);
+            }
+            */
+
+        }
+
+        function gltfOnLoad( gltf ) {
+
+            console.log( 'Assets:loadAsset:gltfOnLoad', gltf.scene );
+
+            if ( options.bake ) {
+                console.log( 'Assets: bake loaded', options.bake );
+            } else {
+                /*
+                bakeMaterial = new THREE.MeshBasicMaterial(
+                    {
+                        color: 0x444444
+                    }
+                );
+                */
+            }
+
+            gltf.scene.traverse( processChild );
 
             applyScale( options, gltf.scene );
             applyPosition( options, gltf.scene );
@@ -306,54 +372,57 @@ function Assets(world, config) {
             applyAnimation( options, gltf.scene );
             applyUV2( options, gltf.scene );
 
-            world.add( gltf.scene );
+            setTimeout(() => {
+                world.add( gltf.scene );
+            }, 1000 );
             
+
         }
 
-        if (options.file.match(/(gltf|glb)$/i)) {
-            assets[name] = gltfLoader.load(options.file, onLoad);
+        if ( options.file.match( /(gltf|glb)$/i ) ) {
+            assets[name] = gltfLoader.load( options.file, gltfOnLoad );
         } else {
-            throw new Error(`Assets:loadAsset: ${options.file} file extension not supported`);
+            throw new Error( `Assets:loadAsset: ${options.file} file extension not supported` );
         }
 
     }
 
-    function createShape(world, shapeName, options) {
-        if (options.disable) return;
-        console.log('Assets:createShape:', shapeName, options, categories);
+    function createShape( world, shapeName, options ) {
+        if ( options.disable ) return;
+        console.log( 'Assets:createShape:', shapeName, options, categories );
         const mesh = new categories[shapeName]( world, options );
 
         return mesh;
     }
 
-    function  loadAsset(name, options) {
+    function  loadAsset( name, options ) {
         
-        if (options.disable) return;
+        if ( options.disable ) return;
         //console.log('Assets:loadAsset:', name, options);
 
         let shape;
 
-        for (const shapeCategoryName in Shapes) {
+        for ( const shapeCategoryName in Shapes ) {
             const category = Shapes[shapeCategoryName];
             categories[shapeCategoryName] = category;
             
-            for (const shapeName in category) {
+            for ( const shapeName in category ) {
                 const camelCaseName = `${shapeCategoryName}${shapeName}`;
-                if (options.type === camelCaseName) {
-                    console.log('Assets:loadAsset: categoryName', shapeCategoryName, camelCaseName);
+                if ( options.type === camelCaseName ) {
+                    console.log( 'Assets:loadAsset: categoryName', shapeCategoryName, camelCaseName );
                     categories[camelCaseName] = Shapes[shapeCategoryName][shapeName];
-                    shape = createShape(world, camelCaseName, options);                   
+                    shape = createShape( world, camelCaseName, options );                   
                     break;
                 }
             }    
         }
 
-        if (!shape) {
-            if (options.type === 'Model') {
-                loadModel(world, options);
+        if ( !shape ) {
+            if ( options.type === 'Model' ) {
+                loadModel( world, options, name );
                 return;
             } else {
-                throw new Error(`unknow options type ${options.type}`);
+                throw new Error( `unknow options type ${options.type}` );
             }
         }
         
@@ -362,19 +431,25 @@ function Assets(world, config) {
 
     function loadAssets() {
         
-        if (!config.items) {
-            console.warn('Assets: no items');
+        if ( !config.items ) {
+            console.warn( 'Assets: no items' );
             return;
         }
 
-        for (const name in config.items) {
-            loadAsset(name, config.items[name]);
+        for ( const name in config.items ) {
+            loadAsset( name, config.items[name] );
         }
     }
 
     loadAssets();
 
-    return assets;
+    const self = {
+        assets,
+        rayAssets
+    };
+
+    world.set( 'assets', self );
+    return self;
 
 }
 

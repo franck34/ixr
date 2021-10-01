@@ -4,7 +4,7 @@ import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js';
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js';
 
-function Loader(world, config) {
+function Loader( world, config ) {
 
     let loadingManager;
 
@@ -18,22 +18,22 @@ function Loader(world, config) {
     </div>
     */
 
-    const progressBarContainer = document.createElement('div');
+    const progressBarContainer = document.createElement( 'div' );
     progressBarContainer.className = 'progress-container centered';
 
-    const progressWrapper = document.createElement('div');
+    const progressWrapper = document.createElement( 'div' );
     progressWrapper.className = 'progress';
 
-    const progressBar = document.createElement('div');
+    const progressBar = document.createElement( 'div' );
     progressBar.className = 'progress-value';
 
-    const progressBarValue = document.createElement('div');
+    const progressBarValue = document.createElement( 'div' );
     progressBarValue.className = 'progress-value-percent';
 
-    progressBarContainer.appendChild(progressWrapper);
-    progressWrapper.appendChild(progressBarValue);
-    progressWrapper.appendChild(progressBar);
-    document.body.appendChild(progressBarContainer);
+    progressBarContainer.appendChild( progressWrapper );
+    progressWrapper.appendChild( progressBarValue );
+    progressWrapper.appendChild( progressBar );
+    document.body.appendChild( progressBarContainer );
 
     const styles = `
 
@@ -90,42 +90,42 @@ function Loader(world, config) {
             transition: width 0.1s;
         }
 
-    `
+    `;
 
     function onStart() {
 
-        console.log('LoadingManager: onStart');
+        console.log( 'LoadingManager: onStart' );
 
     }
 
     function onLoad() {
 
-        console.log('LoadingManager: onLoaded');
-        setTimeout(() => {
-            progressBarContainer.classList.add('ended');
-        }, 500);
+        console.log( 'LoadingManager: onLoaded' );
+        setTimeout( () => {
+            progressBarContainer.classList.add( 'ended' );
+        }, 500 );
         
-        setTimeout(() => {
+        setTimeout( () => {
             progressBarContainer.style.zIndex = -1;
-        }, 2000);
+        }, 2000 );
 
     }
 
-    function onProgress(itemUrl, itemsLoaded, itemsTotal) {
+    function onProgress( itemUrl, itemsLoaded, itemsTotal ) {
 
         let progressRatio = itemsLoaded/itemsTotal;
-        progressRatio = Math.round(progressRatio);
+        progressRatio = Math.round( progressRatio );
         progressBar.style.width = `${progressRatio * 100}%`;
         progressBarValue.innerHTML = progressBar.style.width;
-        console.log('LoadingManager: onProgress', itemUrl, itemsLoaded, itemsTotal);
+        console.log( 'LoadingManager: onProgress', itemUrl, itemsLoaded, itemsTotal );
 
     }
 
     
-    const css = document.createElement("style");
+    const css = document.createElement( 'style' );
     css.innerHTML = styles;
-    css.setAttribute('type', 'text/css');
-    document.head.appendChild(css);
+    css.setAttribute( 'type', 'text/css' );
+    document.head.appendChild( css );
 
     loadingManager = new THREE.LoadingManager();
     loadingManager.onStart = onStart;
@@ -134,22 +134,22 @@ function Loader(world, config) {
 
 
     // Texture loader
-    const textureLoader = new THREE.TextureLoader(loadingManager);
+    const textureLoader = new THREE.TextureLoader( loadingManager );
 
     // Draco loader
-    const dracoLoader = new DRACOLoader(loadingManager)
-    dracoLoader.setDecoderPath('draco/')
+    const dracoLoader = new DRACOLoader( loadingManager );
+    dracoLoader.setDecoderPath( 'draco/' );
     
     // GLTFLoader
-    const gltfLoader = new GLTFLoader(loadingManager);
-    gltfLoader.setDRACOLoader(dracoLoader);
-    if (config.basepath) {
-        gltfLoader.setPath(config.basepath);
+    const gltfLoader = new GLTFLoader( loadingManager );
+    gltfLoader.setDRACOLoader( dracoLoader );
+    if ( config.basepath ) {
+        gltfLoader.setPath( config.basepath );
     }
 
-    const rgbeLoader = new RGBELoader(loadingManager).setDataType( THREE.UnsignedByteType );
+    const rgbeLoader = new RGBELoader( loadingManager ).setDataType( THREE.UnsignedByteType );
 
-    const objLoader = new OBJLoader(loadingManager);
+    const objLoader = new OBJLoader( loadingManager );
 
     const loader = {
         loadingManager,
@@ -158,9 +158,9 @@ function Loader(world, config) {
         gltfLoader,
         rgbeLoader,
         objLoader
-    }
+    };
 
-    world.set('loader', loader);
+    world.set( 'loader', loader );
 
     return loader;
 

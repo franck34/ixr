@@ -11,8 +11,10 @@ const assets = {
 
         'decor':{
             disable:false,
+            rayAsset:true,
             type:'Model',
-            file:'/blender/shootingrange9.glb',
+            file:'/blender/showroom.glb',
+            wireframe: true,
             /*
             material:{
                 color:'/3d/palette.png',
@@ -20,25 +22,25 @@ const assets = {
                 aoMap:'/blender/bakes/MergedBake_Bake1_cyclesbake_AO.jpg'
             },
             */
-            baked:'/blender/SimpleBake_Bakes/MergedBake_Bake1_cyclesbake_COMBINED.jpg',
+            bake:'/blender/showroom.png',
             //envmap:'/3d/starskyhdrispherical_map_by_kirriaa.jpg',
-            receiveShadow:true,
-            castShadow:true,
+            receiveShadow:false,
+            castShadow:false,
 
             scale:{
-                xyz:1.3
+                xyz:1.0
             },
 
             position:{
-                z:-0.01,
-                y:0.01,
+                z:-0.0,
+                y:-0.0,
             },
 
             rotation:{
-                y:Math.PI * 1
+               // y:Math.PI * 1.5
             },
-            depthWrite:true
         },
+        
         'earth':{
             disable:true,
             type:'Model',
@@ -72,13 +74,6 @@ const assets = {
             size:1
         },
 
-        'earth':{
-            disable:true,
-            type:'UniverseEarth',
-            receiveShadow:true,
-            castShadow:true,
-        },
-
         'button':{
             disable:true,
             type:'BasicButton'
@@ -94,6 +89,6 @@ const assets = {
         */
     }
 
-}
+};
 
-export { assets }
+export { assets };

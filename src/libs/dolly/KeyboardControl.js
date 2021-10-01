@@ -1,6 +1,8 @@
 
 function KeyboardControl(world, config, dolly) {
 
+    /* some bugs left, the keyboard behavior is not yet perfect */
+
     let keyboardManager;
 
     function onShiftKeyDown( ev ) {
@@ -65,7 +67,7 @@ function KeyboardControl(world, config, dolly) {
 
             if (dolly.status != 'idle') {
 
-                console.log('EMERGENCY SWITCH MOVING TO IDLE');
+                console.log(`SWITCH ${dolly.status.toUpperCase()} TO IDLE`);
                 dolly.moving = false;
                 dolly.dollyReset();
                 
@@ -186,6 +188,7 @@ function KeyboardControl(world, config, dolly) {
     }
 
     init();
+    
 }
 
 export { KeyboardControl }

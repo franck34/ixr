@@ -18,7 +18,7 @@ const renderers = {
                 colorManagement: true,
                 sortObjects: true
 
-             },
+            },
 
             // Set up a non-black clear color so that we can see if something renders wrong.
             clearColor:0x010203,
@@ -32,7 +32,7 @@ const renderers = {
             outputEncoding:THREE.sRGBEncoding,
             //toneMapping: THREE.ACESFilmicToneMapping,
             //toneMapping: THREE.NoToneMapping,
-            //toneMapping: THREE.LinearToneMapping,
+            //toneMapping: THREE.LinearToneMapping, // good one for blender ?
             //toneMapping: THREE.ReinhardToneMapping,
             //toneMapping: THREE.CineonToneMapping,
             //@TODO: implement toneMappingExposureXR

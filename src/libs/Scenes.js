@@ -1,148 +1,209 @@
+import anylogger from 'anylogger';
+const log = anylogger( 'Scenes' );
+console.log(log);
+
 import * as THREE from 'three';
+
 
 //@TODO: https://stackoverflow.com/questions/16226693/three-js-show-world-coordinate-axes-in-corner-of-scene
 
-function Scene(world, sceneName, sceneConfig) {
+function Scene( context, sceneName, sceneConfig ) {
 
-    if (!sceneConfig || typeof sceneConfig != 'object') {
-        throw new Error('Scene: unexpected typeof of sceneConfig');
-    }
+    /************************************************************************************************
+     * Integrity checks
+     ***********************************************************************************************/
+    
+    console.assert( typeof context === 'object','context should be an object' );
+    console.assert( typeof sceneConfig === 'object', 'sceneConfig should be an object' );
 
-    console.log('Scene', sceneName, sceneConfig);
-
-    let wireframe = false;
+    /************************************************************************************************
+     * Variables & constantes (locales)
+     ***********************************************************************************************/
 
     const wireframes = [];
     const scene = new THREE.Scene();
-    scene.name = sceneName;
 
-    for (const key in sceneConfig) {
-        
-        const value = sceneConfig[key];
+    let wireframe = false;
 
-        // setup fog
-        if (key === 'fog') {
+    /************************************************************************************************
+     * init
+     ***********************************************************************************************/
+     
+    init();
 
-            if (sceneConfig[key].enable) {
-                scene[key] = value;
-            }
-
-            continue;
-        }
-
-        // setup axesHelper
-        if (key === 'axesHelper' && value) {
-
-            const axesHelper = new THREE.AxesHelper( value );
-            scene.add(axesHelper);
-            scene.axesHelper = axesHelper;
-
-        }
-
-        scene[key] = sceneConfig[key];
-
-        setupKeyboard();
-    }
+    /************************************************************************************************
+     * Private methods
+     ***********************************************************************************************/
 
     function setupKeyboard() {
         
-        const keyboardManager = world.get('keyboardManager');
-        if (keyboardManager) {
-            keyboardManager.addKeyListener({
+        const keyboardManager = context.get( 'keyboardManager' );
+        if ( keyboardManager ) {
+            keyboardManager.addKeyListener( {
                 key:'w',
                 event:'keydown',
                 handler:toggleWireframe
-            });
+            } );
         }
 
     }
 
     function add() {
-        console.log('Scene:add', ...arguments);
-        scene.add(...arguments);
+        log.info( 'add', ...arguments );
+        scene.add( ...arguments );
     }
 
     function toggleWireframe() {
 
-    	if (wireframe === false) {
+        if ( wireframe === false ) {
 
-            console.log('Scene:toggleWireframe', 'adding wireframes');
+            log.info( 'toggleWireframe', 'adding wireframes' );
 
-		    scene.traverse(child => {
+            scene.traverse( child => {
 			
-                if (child.isMesh) {
+                if ( child.isMesh ) {
 
-                    if (child.font) {
+                    if ( child.font ) {
                         // dont wireframe fonts ! (browser crash)
                         return;
                     }
                     
-				    const wireframeGeometry = new THREE.WireframeGeometry( child.geometry );
-				    const wireframeMaterial = new THREE.LineBasicMaterial( { color: 0xFFFFFF } );
-				    const wireframe = new THREE.LineSegments( wireframeGeometry, wireframeMaterial );
-				    wireframe.name = 'wireframe_all';
-				    child.add(wireframe);
+                    const wireframeGeometry = new THREE.WireframeGeometry( child.geometry );
+                    const wireframeMaterial = new THREE.LineBasicMaterial( { color: 0xFFFFFF } );
+                    const wireframe = new THREE.LineSegments( wireframeGeometry, wireframeMaterial );
+                    wireframe.name = 'wireframe_all';
+                    child.add( wireframe );
                     child.wireframe = wireframe;
                     //child.visible = false;
 
-    			}
-		    });
+                }
 
-		    wireframe = true;
+            } );
 
-    	} else {
+            wireframe = true;
 
-            console.log('Scene:toggleWireframe', 'removing wireframes', wireframes );
+        } else {
 
-            scene.traverse(child => {
+            console.log( 'Scene:toggleWireframe', 'removing wireframes', wireframes );
+
+            scene.traverse( child => {
 			
-                if (child.wireframe) {
+                if ( child.wireframe ) {
 
-                    scene.remove(child.wireframe);
-				    child.remove(child.wireframe);
+                    scene.remove( child.wireframe );
+                    child.remove( child.wireframe );
                     
-    			}
+                }
 
-		    });
-		    wireframe = false;
+            } );
+            wireframe = false;
 
         }
 
-        console.log('done');
+        console.log( 'done' );
     }
 
-    // for debugging
-    window.scene = scene;
+    function init() {
+
+        log.info( 'Scene', sceneName, sceneConfig );        
+
+        scene.name = sceneName;
+
+        for ( const key in sceneConfig ) {
+            
+            const value = sceneConfig[key];
+
+            // setup fog
+            if ( key === 'fog' ) {
+
+                if ( sceneConfig[key].enable ) {
+
+                    scene[key] = value;
+
+                }
+
+                continue;
+            }
+
+            // setup axesHelper
+            if ( key === 'axesHelper' && value ) {
+
+                const axesHelper = new THREE.AxesHelper( value );
+                scene.add( axesHelper );
+                scene.axesHelper = axesHelper;
+
+            }
+
+            scene[key] = sceneConfig[key];
+
+            setupKeyboard();
+        }
+
+    }
 
     return {
         add,
         toggleWireframe,
         threeObject:scene
-    }
+    };
 
 }
 
 
-function Scenes(world, config) {
+function Scenes( context, config ) {
+
+    /************************************************************************************************
+     * Integrity checks
+     ***********************************************************************************************/
+
+    console.assert( typeof context === 'object','context should be an object' );
+    console.assert( typeof config === 'object','config should be an object' );
+
+    /************************************************************************************************
+     * Variables & constantes (locales)
+     ***********************************************************************************************/
 
     const scenes = {};
+    context.set( 'scenes', scenes );
 
-    if (!config || typeof config != 'object') {
-        throw new Error('Scenes: unexpected typeof of config');
+    /************************************************************************************************
+     * init
+     ***********************************************************************************************/
+     
+    init();
+
+    /************************************************************************************************
+     * Private methods
+     ***********************************************************************************************/
+
+    function init() {
+
+
+        for ( const name in config.items ) {
+
+            scenes[name] = new Scene( context, name, config.items[name] );
+
+        }
+
+        if ( config.default ) {
+
+            console.log( 'setting scene.main with value from config', config.default );
+            context.set( 'scene.main', scenes[ config.default ] );
+
+        } else {
+
+            log.debug( '@TODO: take the first scene' );
+
+        }
+
     }
-
-    for (const name in config.items) {
-
-        scenes[name] = new Scene( world, name, config.items[name] );
-
-    }
-
-    world.set('scenes', scenes)
-    world.set('scene.main', scenes[config.default]);
 
     return scenes;
 
 }
 
-export { Scenes }
+export { Scenes };
+
+
+
 

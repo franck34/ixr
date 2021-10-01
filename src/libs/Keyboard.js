@@ -1,7 +1,7 @@
-function Keyboard(world, config) {
+function Keyboard( world, config ) {
 
     if ( config.disable ) return;
-    console.log('Keyboard', config);
+    console.log( 'Keyboard', config );
 
     const allowedEvents = [ 'keyup', 'keydown' ];
 
@@ -11,24 +11,24 @@ function Keyboard(world, config) {
     const status = { };
     let keyCount = 0;
 
-    window.addEventListener('keydown', onKeyDown);
-    window.addEventListener('keyup', onKeyUp);
+    window.addEventListener( 'keydown', onKeyDown );
+    window.addEventListener( 'keyup', onKeyUp );
 
-    PubSub.subscribe('XREnter', disableLoopKeys);
-    PubSub.subscribe('XRExit', enableLoopKeys);
+    PubSub.subscribe( 'XREnter', disableLoopKeys );
+    PubSub.subscribe( 'XRExit', enableLoopKeys );
 
-    const renderer = world.get('renderer.main');
-    renderer.addRenderJob(loopKeys);
+    const renderer = world.get( 'renderer.main' );
+    renderer.addRenderJob( loopKeys );
 
     function enableLoopKeys() {
 
-        renderer.addRenderJob(loopKeys);
+        renderer.addRenderJob( loopKeys );
 
     }
 
     function disableLoopKeys() {
 
-        renderer.removeRenderJob(loopKeys);
+        renderer.removeRenderJob( loopKeys );
 
     }
 
@@ -62,43 +62,43 @@ function Keyboard(world, config) {
 
     }
 
-    function onKeyDown(ev) {
+    function onKeyDown( ev ) {
 
         ev.stopPropagation();
 
         const now = Date.now();
         
-        let handler = getConfigHandler('keydown', ev);
-        if (!handler) {
-            console.log('no handler', ev.key, ev.code)
+        let handler = getConfigHandler( 'keydown', ev );
+        if ( !handler ) {
+            //console.log('no handler', ev.key, ev.code)
             return;
         }
 
         const obj = { start: now, since: 0, ev, handler };
 
         let inserted = false;
-        if (!status[ev.key] || !status[ev.code]) {
+        if ( !status[ev.key] || !status[ev.code] ) {
             status[ev.key] = obj;
             inserted = true;
         }
         
-        if (!status[ev.code]) {
+        if ( !status[ev.code] ) {
             status[ev.code] = obj;
             inserted = true;
         }
         
-        if (inserted) {
+        if ( inserted ) {
             //console.log('onKeyDown', ev.key, ev.code);
         }
 
     }
 
-    function onKeyUp(ev) {
+    function onKeyUp( ev ) {
 
         ev.stopPropagation();
 
-        let handler = getConfigHandler('keyup', ev);
-        if (!handler) {
+        let handler = getConfigHandler( 'keyup', ev );
+        if ( !handler ) {
             return;
         }   
         
@@ -112,45 +112,56 @@ function Keyboard(world, config) {
         return false;
     }
 
-    function addKeyListener(options) {
+    function addKeyListener( options ) {
 
-        if (!options.id) {
-            throw new Error('addKeyListener: missing id (ev.code or ev.key)');
+        if ( !options.id ) {
+            throw new Error( 'addKeyListener: missing id (ev.code or ev.key)' );
         }
 
         let eventName;
         let handlerType;
 
-        for (eventName of allowedEvents) {
+        for ( eventName of allowedEvents ) {
             
-            if (!options[eventName]) continue;
-            console.log('event', eventName);
+            if ( !options[eventName] ) continue;
 
             handlerType = typeof options[eventName];
             if ( handlerType!= 'function' ) {
-                throw new Error(`addKeyListener: event ${eventName}, expected a function, received ${handlerType}`);
+                throw new Error( `addKeyListener: event ${eventName}, expected a function, received ${handlerType}` );
             }
 
-            console.log(`addKeyListener: register event ${eventName} id=${options.id}`);
+            //console.log( `addKeyListener: register event ${eventName} id=${options.id}` );
             config[eventName][options.id] = options[eventName];
         }
 
-        console.log(config);
         return;
 
     }
 
-    function removeKeyListeners(key) {
+    function removeKeyListeners( key ) {
 
+        for ( eventName of allowedEvents ) {
+            
+            if ( !options[eventName] ) continue;
+            //console.log( 'event', eventName );
+
+            handlerType = typeof options[eventName];
+            if ( handlerType!= 'function' ) {
+                throw new Error( `addKeyListener: event ${eventName}, expected a function, received ${handlerType}` );
+            }
+
+            //console.log( `addKeyListener: register event ${eventName} id=${options.id}` );
+            config[eventName][options.id] = options[eventName];
+        }
 
     }
 
     const keyboardManager = {
         addKeyListener,
-        removeKeyListeners
+        //removeKeyListeners
     }
 
-    world.set('keyboardManager', keyboardManager);
+    world.set( 'keyboardManager', keyboardManager );
 
     return keyboardManager;
 }

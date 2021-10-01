@@ -5,9 +5,11 @@
   "main": ".eslintrc.js",
   "dependencies": {
     "canvas-txt": "^3.0.0",
+    "debug": "^4.3.2",
     "pubsub-js": "^1.9.3",
     "three": "^0.132.2",
-    "troika-three-text": "^0.42.0"
+    "troika-three-text": "^0.42.0",
+    "ulog": "^2.0.0-beta.19"
   },
   "scripts": {
     "dev": "webpack serve --config webpack.dev.js --progress",

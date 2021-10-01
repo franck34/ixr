@@ -1,4 +1,3 @@
-import * as THREE from 'three';
 
 const dolly = {
 
@@ -22,12 +21,13 @@ const dolly = {
         },
 
         xr:{
-            position:[ 0.0, 0.0, 6.0 ],
+            position:[ 0.0, 0.5, 6.0 ],
             rotation:[ 0.0, 0.0, 0.0 ]
         }
     }
 
-}
+};
 
 
-export { dolly }
+export { dolly };
+

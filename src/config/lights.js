@@ -8,36 +8,36 @@ const lights = {
     items:{
 
         'ambient':{
-            enable: false,
+            enable: true,
             type: 'ambient',
-            color: new THREE.Color(0xFFFFFF),
-            intensity: 1
+            color: new THREE.Color( 0x111111 ),
+            intensity: 2
         },
 
         'directional':{
-            enable:false,
+            enable:true,
             type: 'directional',
-            showHelper:true,
+            showHelper:false,
             color:new THREE.Color( 0xffffff ),
-            intensity: 2,
+            intensity: 1,
             position:{
-                x: 0,
-                y: 2,
-                z: 0
+                x: 3,
+                y: 3,
+                z: 5
             }
         },
 
         'point':{
             enable:false,
             type: 'point',
-            showHelper:true,
+            showHelper:false,
             color:new THREE.Color( 0xffffff ),
             intensity:1,
 
             position:{
-                x: 2,
-                y: 2,
-                z: -6
+                x: 0,
+                y: 3,
+                z: 0
             }
         },
 

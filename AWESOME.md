@@ -34,3 +34,10 @@
 # palette low poly
 * https://lospec.com/
 
+
+# electron embed likel 
+* https://github.com/nativefier/nativefier
+
+# debug panel pour three ?
+* https://github.com/lo-th/uil
+
