@@ -4,21 +4,25 @@ function Keyboard( world, config ) {
     console.log( 'Keyboard', config );
 
     const allowedEvents = [ 'keyup', 'keydown' ];
-
-    config.keydown = { };
-    config.keyup = { };
-
     const status = { };
-    let keyCount = 0;
-
-    window.addEventListener( 'keydown', onKeyDown );
-    window.addEventListener( 'keyup', onKeyUp );
-
-    PubSub.subscribe( 'XREnter', disableLoopKeys );
-    PubSub.subscribe( 'XRExit', enableLoopKeys );
-
     const renderer = world.get( 'renderer.main' );
-    renderer.addRenderJob( loopKeys );
+
+    init();
+
+    function init() {
+    
+        config.keydown = { };
+        config.keyup = { };
+
+        window.addEventListener( 'keydown', onKeyDown );
+        window.addEventListener( 'keyup', onKeyUp );
+
+        PubSub.subscribe( 'XREnter', disableLoopKeys );
+        PubSub.subscribe( 'XRExit', enableLoopKeys );
+
+        renderer.addRenderJob( loopKeys );
+    
+    }
 
     function enableLoopKeys() {
 
@@ -35,7 +39,6 @@ function Keyboard( world, config ) {
     function loopKeys( delta, time ) {
 
         //console.log('loopKeys', Date.now(), status);
-        keyCount = 0;
 
         for ( const k in status ) {
 
@@ -138,6 +141,8 @@ function Keyboard( world, config ) {
 
     }
 
+    /*
+
     function removeKeyListeners( key ) {
 
         for ( eventName of allowedEvents ) {
@@ -156,10 +161,12 @@ function Keyboard( world, config ) {
 
     }
 
+    */
+
     const keyboardManager = {
         addKeyListener,
         //removeKeyListeners
-    }
+    };
 
     world.set( 'keyboardManager', keyboardManager );
 
