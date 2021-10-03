@@ -56,7 +56,7 @@ const lights = {
         }
     }
 
-}
+};
 
 
-export { lights }
+export { lights };

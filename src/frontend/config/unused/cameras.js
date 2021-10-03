@@ -71,4 +71,4 @@ window.addEventListener('resize', () =>
 */
 
 
-export { cameras }
+export { cameras };

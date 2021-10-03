@@ -42,7 +42,7 @@ const renderers = {
                 
     }
 
-}
+};
 
 
-export { renderers }
+export { renderers };

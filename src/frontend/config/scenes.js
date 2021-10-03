@@ -21,9 +21,9 @@ const scenes = {
         }
     }
 
-}
+};
 
 
-export { scenes }
+export { scenes };
 
 

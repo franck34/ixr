@@ -60,6 +60,6 @@ const shaders = {
         `
     }
     
-}
+};
 
-export { shaders }
+export { shaders };

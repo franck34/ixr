@@ -4,12 +4,12 @@ const controls = {
 
     items:{
         'orbit':{
-            enable:true,
+            enable:false,
             type:'OrbitControls'
         }
     }
 
-}
+};
 
 
-export { controls }
+export { controls };
