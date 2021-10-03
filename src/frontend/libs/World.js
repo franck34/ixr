@@ -71,23 +71,19 @@ function World( config ) {
     const world = new MyWorld( config );
     world.rayTargets = [];
     world.config = config;
-
+  
     new Scenes( world, config.scenes );
-    new Renderers( world, config.renderers );
-    //new Cameras( world, config.cameras );
-    
     new Keyboard( world, config.keyboard );
+    new Renderers( world, config.renderers );
     new Dolly( world, config.dolly );
-    
     new Loader( world, config.assets );
     new Assets( world, config.assets );
     new PBRs( world, config.pbrs );
-    
     new Lights( world, config.lights );
+    new XR( world, config.xr );
     
     //new Controls( world, config.controls );
-
-    new XR( world, config.xr );
+    //new Cameras( world, config.cameras );
     //new UI(world, config.ui);
 
     return world;

@@ -89,6 +89,8 @@ function Assets( world, config ) {
 
     function applyWireframe( options, object ) {
 
+        object.wireframable = true;
+
         if ( typeof options.wireframe === 'boolean' ) {
 
             object.material.wireframe = options.wireframe || false;
@@ -301,7 +303,6 @@ function Assets( world, config ) {
 
                 replacePBRs( child );
 
-                applyWireframe( options, child );
                 applyShadow( options, child );
 
                 if ( bakeMaterial ) {
@@ -323,7 +324,6 @@ function Assets( world, config ) {
 
                 if ( child.geometry ) {
                     // Trying to fix mouse raycaster
-
                     child.geometry.computeBoundingBox();
                 }
 
@@ -338,6 +338,10 @@ function Assets( world, config ) {
                     console.warn( 'Assets: pushing in raycaster list', child );
                     rayAssets.push( child );
                 }
+
+                applyWireframe( options, child );
+
+
             }
 
             /*

@@ -1,5 +1,5 @@
 
-function KeyboardControl(world, config, dolly) {
+function KeyboardControl( world, config, dolly ) {
 
     /* some bugs left, the keyboard behavior is not yet perfect */
 
@@ -17,9 +17,9 @@ function KeyboardControl(world, config, dolly) {
 
         } else {
 
-            if (dolly.status === 'walking') {
+            if ( dolly.status === 'walking' ) {
 
-                console.log('SWITCH WALKING TO RUNNING');
+                console.log( 'SWITCH WALKING TO RUNNING' );
 
                 dolly.status = 'running';
 
@@ -52,7 +52,7 @@ function KeyboardControl(world, config, dolly) {
 
         if ( dolly.status ===' running' ) {
 
-            console.log('SWITCH RUNNING TO WALKING', dolly.moveZ);
+            console.log( 'SWITCH RUNNING TO WALKING', dolly.moveZ );
             dolly.status = 'walking';
 
         }
@@ -65,9 +65,9 @@ function KeyboardControl(world, config, dolly) {
         
         if ( dolly.moveX === 0 && dolly.moveY === 0 && dolly.moveZ === 0 ) {
 
-            if (dolly.status != 'idle') {
+            if ( dolly.status != 'idle' ) {
 
-                console.log(`SWITCH ${dolly.status.toUpperCase()} TO IDLE`);
+                console.log( `SWITCH ${dolly.status.toUpperCase()} TO IDLE` );
                 dolly.moving = false;
                 dolly.dollyReset();
                 
@@ -77,17 +77,17 @@ function KeyboardControl(world, config, dolly) {
 
     }
 
-    function addKeyEvent(key, moveDirection, moveAxis, moveAxisValue) {
+    function addKeyEvent( key, moveDirection, moveAxis, moveAxisValue ) {
 
         keyboardManager.addKeyListener( {
             id:key,
             keydown:( delta, time, ev ) => {
 
-                if (onShiftKeyDown(ev)) {
+                if ( onShiftKeyDown( ev ) ) {
 
-                    if (dolly.status === 'walking') {
+                    if ( dolly.status === 'walking' ) {
 
-                        console.log('SWITCH WALKING TO RUNNING');
+                        console.log( 'SWITCH WALKING TO RUNNING' );
                         dolly.status = 'running';
 
                     }
@@ -95,9 +95,9 @@ function KeyboardControl(world, config, dolly) {
                     return;
                 }
 
-                if (dolly.status === 'idle') {
+                if ( dolly.status === 'idle' ) {
 
-                    console.log('SWITCH IDLE TO WALKING');
+                    console.log( 'SWITCH IDLE TO WALKING' );
                     dolly.status = 'walking';
 
                 }
@@ -111,7 +111,7 @@ function KeyboardControl(world, config, dolly) {
                 if ( moveAxis ) {
 
                     dolly[ moveAxis ] = moveAxisValue;
-                    if (ev.shiftKey) {
+                    if ( ev.shiftKey ) {
                         dolly[ moveAxis ] = moveAxisValue * dolly.runRatio;
                     }
                     dolly.moving = true;
@@ -122,11 +122,11 @@ function KeyboardControl(world, config, dolly) {
 
             keyup:( delta, time, ev ) => {
 
-                if (onShiftKeyUp(ev)) {
+                if ( onShiftKeyUp( ev ) ) {
 
-                    if (dolly.status === 'running') {
+                    if ( dolly.status === 'running' ) {
 
-                        console.log('SWITCH RUNNING TO WALKING');
+                        console.log( 'SWITCH RUNNING TO WALKING' );
                         dolly.status = 'walking';
                         
                         if ( dolly.moveX ) {
@@ -158,32 +158,32 @@ function KeyboardControl(world, config, dolly) {
                 showStatus();
                 
             }
-        });  
+        } );  
 
     }
 
     function installEvents() {
 
-        addKeyEvent('KeyW', 'moveForward', 'moveZ', -1);
-        addKeyEvent('KeyS', 'moveBackward', 'moveZ', 1);
-        addKeyEvent('KeyA', 'moveLeft', 'moveX', -1);
-        addKeyEvent('KeyD', 'moveRight', 'moveX', 1);
-        addKeyEvent('ShiftLeft');
+        addKeyEvent( 'KeyW', 'moveForward',     'moveZ', -1 );
+        addKeyEvent( 'KeyS', 'moveBackward',    'moveZ',  1 );
+        addKeyEvent( 'KeyA', 'moveLeft',        'moveX', -1 );
+        addKeyEvent( 'KeyD', 'moveRight',       'moveX',  1 );
+        addKeyEvent( 'ShiftLeft' );
         
+    }
+
+    function onKeyboardReady( channel, keyboardManagerInstance ) {
+
+        console.log( 'Dolly::KeyboardControl: onKeyboardReady' );
+
+        keyboardManager = keyboardManagerInstance;
+
+        installEvents();
     }
 
     function init() {
 
-        keyboardManager = world.get('keyboardManager');
-
-        if ( !keyboardManager ) {
-
-            console.warn('could not attach dolly to keyboardManager; keyboardManager not found');
-
-        } 
-        
-        // Note: keyboardManager handle install/remove events for XR enter/exit
-        installEvents();
+        PubSub.subscribe( 'keyboardReady' , onKeyboardReady );
     
     }
 

@@ -5,12 +5,13 @@ function Keyboard( world, config ) {
 
     const allowedEvents = [ 'keyup', 'keydown' ];
     const status = { };
-    const renderer = world.get( 'renderer.main' );
+
+    let renderer;
 
     init();
 
     function init() {
-    
+
         config.keydown = { };
         config.keyup = { };
 
@@ -18,20 +19,29 @@ function Keyboard( world, config ) {
         window.addEventListener( 'keyup', onKeyUp );
 
         PubSub.subscribe( 'XREnter', disableLoopKeys );
-        PubSub.subscribe( 'XRExit', enableLoopKeys );
+        PubSub.subscribe( 'XRExit', enableLoopKeys );    
+        PubSub.subscribe( 'rendererReady', onRendererReady );
 
-        renderer.addRenderJob( loopKeys );
-    
+    }
+
+    function onRendererReady( channel, myRenderer ) {
+
+        renderer = myRenderer;
+
+        enableLoopKeys();
+
     }
 
     function enableLoopKeys() {
 
+        if ( !renderer ) return;
         renderer.addRenderJob( loopKeys );
 
     }
 
     function disableLoopKeys() {
 
+        if ( !renderer ) return;
         renderer.removeRenderJob( loopKeys );
 
     }
@@ -168,7 +178,7 @@ function Keyboard( world, config ) {
         //removeKeyListeners
     };
 
-    world.set( 'keyboardManager', keyboardManager );
+    PubSub.publish( 'keyboardReady' , keyboardManager );
 
     return keyboardManager;
 }

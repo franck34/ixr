@@ -1,7 +1,3 @@
-import anylogger from 'anylogger';
-const log = anylogger( 'Scenes' );
-console.log(log);
-
 import * as THREE from 'three';
 
 
@@ -20,10 +16,11 @@ function Scene( context, sceneName, sceneConfig ) {
      * Variables & constantes (locales)
      ***********************************************************************************************/
 
-    const wireframes = [];
     const scene = new THREE.Scene();
+    const addWireframeObject = true;
 
     let wireframe = false;
+    let keyboardManager;
 
     /************************************************************************************************
      * init
@@ -36,76 +33,102 @@ function Scene( context, sceneName, sceneConfig ) {
      ***********************************************************************************************/
 
     function setupKeyboard() {
-        
-        const keyboardManager = context.get( 'keyboardManager' );
-        if ( keyboardManager ) {
-            keyboardManager.addKeyListener( {
-                key:'w',
-                event:'keydown',
-                handler:toggleWireframe
-            } );
-        }
+
+        console.log('setupKeyboard');
+
+        keyboardManager.addKeyListener( {
+            id:'w',
+            keydown:toggleWireframe,
+            keyup:toggleWireframe
+        } );  
 
     }
 
     function add() {
-        log.info( 'add', ...arguments );
+
         scene.add( ...arguments );
+
+    }
+
+    function wireframeOn() {
+
+        scene.traverse( child => {
+        
+            // attributes wireframable setted in Assets.js
+            if ( child.wireframable ) {
+
+                if ( addWireframeObject ) {
+
+                    const wireframeGeometry = new THREE.WireframeGeometry( child.geometry );
+                    const wireframeMaterial = new THREE.LineBasicMaterial( { color: 0xFFFFFF } );
+                    const wireframe = new THREE.LineSegments( wireframeGeometry, wireframeMaterial );
+
+                    child.add( wireframe );
+                    child.wireframe = wireframe;
+
+                }  else {
+
+                    child.material.wireframe = true;
+
+                }
+
+                
+            }
+
+        } );
+
+        wireframe = true;
+
+    }
+
+    function wireframeOff() {
+        
+        scene.traverse( child => {
+			
+            if ( child.wireframable ) {
+                if ( child.wireframe ) {
+
+                    scene.remove( child.wireframe );
+                    child.remove( child.wireframe );
+
+                } else {
+
+                    child.material.wireframe = false;
+
+                }
+                
+            }
+
+        } );
+
+        wireframe = false;
+
     }
 
     function toggleWireframe() {
 
         if ( wireframe === false ) {
 
-            log.info( 'toggleWireframe', 'adding wireframes' );
-
-            scene.traverse( child => {
-			
-                if ( child.isMesh ) {
-
-                    if ( child.font ) {
-                        // dont wireframe fonts ! (browser crash)
-                        return;
-                    }
-                    
-                    const wireframeGeometry = new THREE.WireframeGeometry( child.geometry );
-                    const wireframeMaterial = new THREE.LineBasicMaterial( { color: 0xFFFFFF } );
-                    const wireframe = new THREE.LineSegments( wireframeGeometry, wireframeMaterial );
-                    wireframe.name = 'wireframe_all';
-                    child.add( wireframe );
-                    child.wireframe = wireframe;
-                    //child.visible = false;
-
-                }
-
-            } );
-
-            wireframe = true;
+            wireframeOn();
 
         } else {
 
-            console.log( 'Scene:toggleWireframe', 'removing wireframes', wireframes );
-
-            scene.traverse( child => {
-			
-                if ( child.wireframe ) {
-
-                    scene.remove( child.wireframe );
-                    child.remove( child.wireframe );
-                    
-                }
-
-            } );
-            wireframe = false;
-
+            wireframeOff();
+            
         }
 
-        console.log( 'done' );
+    }
+
+    function onKeyboardReady( channel, keyboardManagerInstance ) {
+
+        keyboardManager = keyboardManagerInstance;
+        setupKeyboard();
+
     }
 
     function init() {
 
-        log.info( 'Scene', sceneName, sceneConfig );        
+        console.log( 'Scene', sceneName, sceneConfig );
 
         scene.name = sceneName;
 
@@ -136,7 +159,8 @@ function Scene( context, sceneName, sceneConfig ) {
 
             scene[key] = sceneConfig[key];
 
-            setupKeyboard();
+            PubSub.subscribe( 'keyboardReady' , onKeyboardReady );
+            
         }
 
     }
@@ -192,7 +216,7 @@ function Scenes( context, config ) {
 
         } else {
 
-            log.debug( '@TODO: take the first scene' );
+            console.log( '@TODO: take the first scene' );
 
         }
 

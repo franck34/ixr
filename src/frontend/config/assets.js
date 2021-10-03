@@ -14,7 +14,7 @@ const assets = {
             rayAsset:true,
             type:'Model',
             file:'/blender/scenes/showroom/showroom.glb',
-            wireframe: true,
+            wireframe: false,
             /*
             material:{
                 color:'/3d/palette.png',

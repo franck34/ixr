@@ -36,11 +36,10 @@ function Renderer( world, name, config ) {
 
     const clock = new THREE.Clock();
     const renderQueue = [ render ];
-    let firstRender = true;
-    let changes = false;
-
     const renderer = new THREE.WebGLRenderer( config.webGLRendererOptions );
     renderer.name = name;
+
+    let firstRender = true;
 
     for ( const key in config ) {
         renderer[key] = config[key];
@@ -57,9 +56,13 @@ function Renderer( world, name, config ) {
         const idx = renderQueue.indexOf( job );
 
         if ( idx > -1 ) {
+
             renderQueue.splice( idx, 1 );
+
         } else {
+
             console.warn( 'Renderers: removeRenderJob: handler not found', job );
+
         }
 
     }
@@ -93,6 +96,7 @@ function Renderer( world, name, config ) {
 
 
     
+    /*
     // this is broken in an XR session
     function addComposer( scene, camera ) {
 
@@ -108,9 +112,9 @@ function Renderer( world, name, config ) {
         renderer.setRenderTarget( composer.readBuffer );
 
     }
-    
+    */
 
-    let sm, cm, composer;
+    let sm, cm;
 
     function render() {
         
@@ -150,11 +154,15 @@ function Renderer( world, name, config ) {
     renderer.setAnimationLoop(  animationLoop );
     document.body.appendChild( renderer.domElement );
 
-    return {
+    const instance = {
         addRenderJob,
         removeRenderJob,
         threeObject:renderer
     };
+
+    PubSub.publish( 'rendererReady' , instance );
+
+    return instance;
 
 }
 
