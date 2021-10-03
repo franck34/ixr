@@ -22,6 +22,9 @@ module.exports = {
     ignorePatterns: [
         'node_modules',
         'src/dist'
-    ]
+    ],
+    'globals':{
+        'PubSub': true
+    }
 };
 
