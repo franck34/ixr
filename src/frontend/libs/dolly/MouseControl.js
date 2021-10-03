@@ -3,21 +3,22 @@ import { PointerLockControls } from 'three/examples/jsm/controls/PointerLockCont
 
 function MouseControl( world, config, dolly ) {
 
+    let domEl;
     let controls;
     let locked = false;
     let timeout;
 
     function prepareLock() {
         
-        console.log('MouseControl: trying to lock ...');
+        console.log( 'MouseControl: trying to lock ...' );
         controls.lock();
 
         // https://bugs.chromium.org/p/chromium/issues/detail?id=1127223
-        timeout = setTimeout(() => {
-            if (!locked) {
-                console.error('click again in one sec @TODO: html message');
+        timeout = setTimeout( () => {
+            if ( !locked ) {
+                console.error( 'click again in one sec @TODO: html message' );
             }
-        }, 1000);
+        }, 1000 );
 
 
     }
@@ -32,25 +33,30 @@ function MouseControl( world, config, dolly ) {
 
     function installEvents() {
 
-        console.log('MouseControl: installEvents');
-        window.addEventListener( 'click', prepareLock );
-        window.addEventListener( 'mousedown', onMouseDown );
+        console.log( 'MouseControl: installEvents' );
+        domEl.addEventListener( 'click', prepareLock );
+        domEl.addEventListener( 'mousedown', onMouseDown );
+
+        controls = new PointerLockControls( dolly, document.body );
+
+        controls.addEventListener( 'lock', onLock );
+        controls.addEventListener( 'unlock', onUnLock );
         
     }
 
     function removeEvents() {
         
         controls.unlock();
-        console.log('MouseControl: removeEvents');       
-        window.removeEventListener( 'mousedown', onMouseDown );
+        console.log( 'MouseControl: removeEvents' );       
+        domEl.removeEventListener( 'mousedown', onMouseDown );
 
     }
 
     function onLock() {
 
-        console.log('MouseControl: locked');
-        window.addEventListener( 'mousemove', onMouseMove );
-        window.removeEventListener( 'click', prepareLock );
+        console.log( 'MouseControl: locked' );
+        domEl.addEventListener( 'mousemove', onMouseMove );
+        domEl.removeEventListener( 'click', prepareLock );
         locked = true;
         clearTimeout( timeout );
         
@@ -58,27 +64,28 @@ function MouseControl( world, config, dolly ) {
 
     function onUnLock() {
 
-        console.log('MouseControl: unlocked');
-        window.addEventListener( 'click', prepareLock );
-        window.removeEventListener( 'mousemove', onMouseMove );
+        console.log( 'MouseControl: unlocked' );
+        domEl.addEventListener( 'click', prepareLock );
+        domEl.removeEventListener( 'mousemove', onMouseMove );
         locked = false;
 
     }
 
-    function init() {
+    function onRendererReady( channel, rendererInstance ) {
         
-        controls = new PointerLockControls( dolly, document.body );
-
-        controls.addEventListener( 'lock', onLock );
-        controls.addEventListener( 'unlock', onUnLock );
-
+        domEl = rendererInstance.threeObject.domElement;
         installEvents();
+        
+    }
 
-        PubSub.subscribe('XREnter', removeEvents);
-        PubSub.subscribe('XRExit', installEvents);
+    function init() {
+
+        PubSub.subscribe( 'XREnter', removeEvents );
+        PubSub.subscribe( 'XRExit', installEvents );
+        PubSub.subscribe( 'rendererReady', onRendererReady );
     }
 
     init();
 }
 
-export { MouseControl }
+export { MouseControl };
